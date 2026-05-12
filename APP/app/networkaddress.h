@@ -2,6 +2,7 @@
 #define NETWORKADDRESS_H
 
 #include <string>
+#include <cstdint>
 
 using IPv4 = std::string;
 
