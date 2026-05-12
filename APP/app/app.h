@@ -4,6 +4,7 @@
 #include "networkaddress.h"
 
 #include <iostream>
+#include <vector>
 
 struct Device{
     NetworkAddress socket;
