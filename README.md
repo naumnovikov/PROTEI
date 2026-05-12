@@ -45,5 +45,5 @@ git clone -b task_01_02 https://github.com/naumnovikov/PROTEI.git
 ### Сборка и запуск тестов
 ```bash
 cmake --build . --target protei_tests
-./protei_tests
+ ./TESTS/protei_tests
 ```
