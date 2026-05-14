@@ -68,11 +68,11 @@ void App::configurate(std::string json_filenameParam) {
     }catch (nlohmann::detail::parse_error){
         spdlog::error("configurate: JSON parse error in file {}", json_filenameParam);
         json_file.close();
-        return;
+        throw std::invalid_argument("JSON parse error in file {}" + json_filenameParam);
     }catch (...){
-        spdlog::error("configurate: Unknown error parsing file {}", json_filenameParam);
+        spdlog::error("configurate: Unknown error with parsing file {}", json_filenameParam);
         json_file.close();
-        return;
+        throw std::invalid_argument("Unknown error with parsing file {}" + json_filenameParam);
     }
     json_file.close();
 
