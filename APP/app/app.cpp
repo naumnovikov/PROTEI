@@ -252,7 +252,7 @@ void App::interact(){
         if (command_buffer.empty()){
             continue;
         }
-        std::vector<std::string> tokens{interpretateInputCommand(command_buffer)};
+        std::vector<std::string> tokens{interpretateInputCommand(std::move(command_buffer))};
 
         std::string input_command{tokens.at(0)};
         for (char& c : input_command){
