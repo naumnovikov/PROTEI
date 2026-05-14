@@ -9,10 +9,10 @@ NetworkAddress::NetworkAddress(uint64_t ip_address_LE, uint16_t portParam) : por
     ip = std::to_string(byte0_LE) + "." + std::to_string(byte1_LE) + "." + std::to_string(byte2_LE) + "." + std::to_string(byte3_LE);
 }
 
-NetworkAddress::NetworkAddress(const std::string& full_address){     //"254.254.254.254 45111" format
-    size_t space_index{full_address.find(" ")};
-    ip = full_address.substr(0, space_index);
-    port = static_cast<uint16_t>(std::stoi(full_address.substr(space_index+1)));
+NetworkAddress::NetworkAddress(const std::string& full_address){     //"254.254.254.254:45111" format
+    size_t colon_index{full_address.find(":")};
+    ip = full_address.substr(0, colon_index);
+    port = static_cast<uint16_t>(std::stoi(full_address.substr(colon_index+1)));
 }
 
 NetworkAddress::NetworkAddress(const std::string& ip_adrressParam, const std::string& portParam){
