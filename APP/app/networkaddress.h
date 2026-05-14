@@ -11,7 +11,7 @@ private:
     IPv4 ip;
     uint16_t port;
 public:
-    NetworkAddress() : ip("0.0.0.0"), port(0) {};
+    NetworkAddress() : ip("192.168.0.101"), port(2000) {};
     NetworkAddress(const std::string& ip_adrressParam, uint16_t portParam) : ip(ip_adrressParam), port(portParam){}
     NetworkAddress(uint64_t ip_address_LE, uint16_t portParam);
     explicit NetworkAddress(const std::string& full_address);
