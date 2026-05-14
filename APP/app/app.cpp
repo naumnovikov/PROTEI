@@ -120,13 +120,13 @@ void App::configurate(std::string json_filenameParam) {
     device.nodes = json_data["nodes"].get<std::string>();
 }
 
-std::vector<std::string> App::interpretateInputCommand(const std::string& command_buffer){
+std::vector<std::string> App::interpretateInputCommand(std::string command_buffer){
     std::vector<std::string> tokens;
-    std::istringstream iss(command_buffer);
+    std::istringstream iss(std::move(command_buffer));
     std::string token;
     while (iss >> token){
         if (!token.empty()){
-            tokens.push_back(token);
+            tokens.push_back(std::move(token));
         }
     }
     return tokens;
