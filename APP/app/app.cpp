@@ -140,9 +140,7 @@ void App::ProcessACTIVE(const std::vector<std::string>& tokens){
     std::string arg{tokens[1]};
 
     for (char& c : arg){
-        if (std::isalpha(c)){
-            c = std::toupper(c);
-        }
+        c = std::toupper(c);
     }
     if (arg == "TRUE" || arg == "1"){
         Active cmd(*this, Status::ACTIVE);
