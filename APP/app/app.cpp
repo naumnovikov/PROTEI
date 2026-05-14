@@ -265,6 +265,9 @@ void App::interact(){
             }catch(const std::invalid_argument& e){
                 spdlog::warn("{}", e.what());
                 continue;
+            }catch(...){
+                spdlog::warn("Unknown ACTIVE error!");
+                continue;
             }
         }else if (input_command == "MOVE"){
             try{
@@ -275,6 +278,9 @@ void App::interact(){
             }catch(const std::logic_error& e){
                 spdlog::warn("{}", e.what());
                 continue;
+            }catch(...){
+                spdlog::warn("Unknown MOVE error!");
+                continue;
             }
         }
         else if (input_command == "PROTOCOL"){
@@ -283,6 +289,9 @@ void App::interact(){
             }catch(const std::invalid_argument& e){
                 spdlog::warn("{}", e.what());
                 continue;
+            }catch(...){
+                spdlog::warn("Unknown PROTOCOL error!");
+                continue;
             }
         }
         else if (input_command == "EXIT"){
@@ -290,6 +299,9 @@ void App::interact(){
                 ProcessEXIT(tokens);
             }catch(const std::logic_error& e){
                 spdlog::warn("{}", e.what());
+                continue;
+            }catch(...){
+                spdlog::warn("Unknown EXIT error!");
                 continue;
             }
         }
