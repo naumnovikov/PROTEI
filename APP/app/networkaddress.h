@@ -3,6 +3,7 @@
 
 #include <string>
 #include <cstdint>
+#include <string_view>
 
 using IPv4 = std::string;
 
@@ -17,8 +18,7 @@ public:
     explicit NetworkAddress(const std::string& full_address);
     NetworkAddress(const std::string& ip_adrressParam, const std::string& portParam);
 
-    // for tests
-    std::string getIp() const { return ip; }
+    std::string_view getIp() const { return ip; }
     uint16_t getPort() const { return port; }
 };
 
