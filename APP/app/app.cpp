@@ -76,14 +76,12 @@ void App::configurate(std::string json_filenameParam) {
     }
     json_file.close();
 
-    // if wrong JSON - exception
     if (!json_data.contains("ip") || !json_data.contains("port") || !json_data.contains("imei") || !json_data.contains("imsi") || !json_data.contains("location") || !json_data.contains("config") || !json_data.contains("nodes")) {
         spdlog::error("configurate: {}", "Missing required fields");
         throw std::invalid_argument("Missing required fields");
     }
     std::string ip{json_data["ip"].get<std::string>()};
 
-    //check last byte on 1<=byte<254
     size_t lastDotPos{ip.rfind('.')};
     if (lastDotPos == std::string::npos || lastDotPos + 1 >= ip.size()) {
         spdlog::error("configurate: Wrong IP: no valid last byte in '{}'", ip);
