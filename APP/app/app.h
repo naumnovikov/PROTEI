@@ -38,7 +38,7 @@ private:
     TypeOfProtocol typeOfProtocol{TypeOfProtocol::JSON};
     AppWorkingState appWorkingState{AppWorkingState::WORKING};
 public:
-    std::vector<std::string> interpretateInputCommand(const std::string& command_buffer);
+    std::vector<std::string> interpretateInputCommand(std::string command_buffer);
     void configurate(std::string json_filenameParam);
     void printMenu() noexcept;
     void ProcessACTIVE(const std::vector<std::string>& tokens);
