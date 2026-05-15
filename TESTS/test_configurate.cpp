@@ -22,7 +22,33 @@ protected:
     }
 };
 
-TEST_F(ConfigurateTest, ValidConfigSetsAllFields) {
+TEST_F(ConfigurateTest, ValidConfigSetAllFields) {
+    std::string json = R"({
+        "ip": "10.20.30.1",
+        "port": 2048,
+        "imei": [1, 2, 3, 4, 1, 1, 2, 3, 4, 1, 1, 2, 3, 4, 1],
+        "imsi": [1, 2, 3, 4, 1, 1, 2, 3, 4, 1, 1, 2, 3, 4, 1],
+        "location": [55.75, 37.61, 23],
+        "config": "active",
+        "nodes": "node1,node2"
+    })";
+    createTempJson(json);
+    EXPECT_NO_THROW(app.configurate(tempFilename));
+
+    const auto& dev{app.getDevice()};
+    EXPECT_EQ(dev.socket.getIp(), "10.20.30.1");
+    EXPECT_EQ(dev.socket.getPort(), 2048);
+    EXPECT_EQ(dev.imei, (std::vector<char>{1, 2, 3, 4, 1, 1, 2, 3, 4, 1, 1, 2, 3, 4, 1}));
+    EXPECT_EQ(dev.imsi, (std::vector<char>{1, 2, 3, 4, 1, 1, 2, 3, 4, 1, 1, 2, 3, 4, 1}));
+    ASSERT_EQ(dev.location.size(), 3);
+    EXPECT_FLOAT_EQ(dev.location[0], 55.75f);
+    EXPECT_FLOAT_EQ(dev.location[1], 37.61f);
+    EXPECT_FLOAT_EQ(dev.location[2], 23);
+    EXPECT_EQ(dev.config, "active");
+    EXPECT_EQ(dev.nodes, "node1,node2");
+}
+
+TEST_F(ConfigurateTest, NoValidIMEI) {
     std::string json = R"({
         "ip": "10.20.30.1",
         "port": 2048,
@@ -33,18 +59,35 @@ TEST_F(ConfigurateTest, ValidConfigSetsAllFields) {
         "nodes": "node1,node2"
     })";
     createTempJson(json);
-    EXPECT_NO_THROW(app.configurate(tempFilename));
+    EXPECT_THROW(app.configurate(tempFilename), std::invalid_argument);
+}
 
-    const auto& dev{app.getDevice()};
-    EXPECT_EQ(dev.socket.getIp(), "10.20.30.1");
-    EXPECT_EQ(dev.socket.getPort(), 2048);
-    EXPECT_EQ(dev.imei, (std::vector<char>{1, 2, 3, 4}));
-    EXPECT_EQ(dev.imsi, (std::vector<char>{5, 6, 7}));
-    ASSERT_EQ(dev.location.size(), 2);
-    EXPECT_FLOAT_EQ(dev.location[0], 55.75f);
-    EXPECT_FLOAT_EQ(dev.location[1], 37.61f);
-    EXPECT_EQ(dev.config, "active");
-    EXPECT_EQ(dev.nodes, "node1,node2");
+TEST_F(ConfigurateTest, NoValidIMSI) {
+    std::string json = R"({
+        "ip": "10.20.30.1",
+        "port": 2048,
+        "imei": [1, 2, 3, 4, 1, 1, 2, 3, 4, 1, 1, 2, 3, 4, 1],
+        "imsi": [1, 2, 3, 4, 1, 1, 2, 3, 4, 1, 1, 2, 3, 4, 1, 2],
+        "location": [55.75, 37.61],
+        "config": "active",
+        "nodes": "node1,node2"
+    })";
+    createTempJson(json);
+    EXPECT_THROW(app.configurate(tempFilename), std::invalid_argument);
+}
+
+TEST_F(ConfigurateTest, NoValidLocation) {
+    std::string json = R"({
+        "ip": "10.20.30.1",
+        "port": 2048,
+        "imei": [1, 2, 3, 4, 1, 1, 2, 3, 4, 1, 1, 2, 3, 4, 1],
+        "imsi": [1, 2, 3, 4, 1, 1, 2, 3, 4, 1, 1, 2, 3, 4, 1],
+        "location": [55.75, 37.61],
+        "config": "active",
+        "nodes": "node1,node2"
+    })";
+    createTempJson(json);
+    EXPECT_THROW(app.configurate(tempFilename), std::invalid_argument);
 }
 
 TEST_F(ConfigurateTest, MissingRequiredFieldsThrows) {
