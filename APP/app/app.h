@@ -5,6 +5,10 @@
 
 #include <iostream>
 #include <vector>
+#include <nlohmann/json.hpp>
+#include <string_view>
+
+using json = nlohmann::json;
 
 struct Device{
     NetworkAddress socket;
@@ -37,16 +41,24 @@ private:
     Status status{Status::NON_ACTIVE};
     TypeOfProtocol typeOfProtocol{TypeOfProtocol::JSON};
     AppWorkingState appWorkingState{AppWorkingState::WORKING};
+
+    bool validateJSONOnRequiredFileds(const json& json_file) noexcept;
+    bool isIPValid(std::string_view ip) noexcept;
+    bool isIMEIValid(const std::vector<char>& imei) noexcept;
+    bool isIMSIValid(const std::vector<char>& imsi) noexcept;
+    bool isLocationValid(const std::vector<float>& location) noexcept;
+    void setValues(const json& json_data);
+    void printMenu() noexcept;
+    std::string inputCommand();
 public:
     std::vector<std::string> interpretateInputCommand(std::string command_buffer);
-    void configurate(std::string json_filenameParam);
-    void printMenu() noexcept;
     void ProcessACTIVE(const std::vector<std::string>& tokens);
     void ProcessMOVE(const std::vector<std::string>& tokens);
     void ProcessEXIT(const std::vector<std::string>& tokens);
     void ProcessPROTOCOL(const std::vector<std::string>& tokens);
-    std::string inputCommand();
+    void configurate(std::string json_filenameParam);
     void interact();
+
 
     Status getStatus() const noexcept {return status;}
     void setStatus(Status statusParam) noexcept {status = statusParam;}
@@ -55,8 +67,6 @@ public:
     void setAppWorkingState(AppWorkingState appWorkingStateParam) noexcept {appWorkingState = appWorkingStateParam;}
     std::vector<float>& getLocationForMoving() noexcept {return device.location;}
 
-
-    // for tests
     const Device& getDevice() const noexcept {return device;}
     bool isWorking() const noexcept {return appWorkingState == AppWorkingState::WORKING ? true : false;}
 };
