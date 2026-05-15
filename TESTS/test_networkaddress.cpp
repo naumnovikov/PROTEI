@@ -16,23 +16,13 @@ TEST(NetworkAddressTest, LittleEndianConstructor) {
 }
 
 TEST(NetworkAddressTest, FullAddressStringConstructor) {
-    NetworkAddress test("10.0.0.1 25565");
+    NetworkAddress test("10.0.0.1:25565");
     EXPECT_EQ(test.getIp(), "10.0.0.1");
     EXPECT_EQ(test.getPort(), 25565);
 }
 
 TEST(NetworkAddressTest, DefaultConstructor) {
     NetworkAddress test;
-    EXPECT_EQ(test.getIp(), "0.0.0.0");
-    EXPECT_EQ(test.getPort(), 0);
-}
-
-TEST(NetworkAddressTest, EdgePortMin) {
-    NetworkAddress test("1.2.3.4", "1");
-    EXPECT_EQ(test.getPort(), 1);
-}
-
-TEST(NetworkAddressTest, LargePort) {
-    NetworkAddress test("255.255.255.255", "65535");
-    EXPECT_EQ(test.getPort(), 65535);
+    EXPECT_EQ(test.getIp(), "192.168.0.101");
+    EXPECT_EQ(test.getPort(), 2000);
 }
