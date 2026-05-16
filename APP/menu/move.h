@@ -1,9 +1,9 @@
 #ifndef MOVE_H
 #define MOVE_H
 
-#include "menu.h"
-
 #include <vector>
+
+#include "menu.h"
 
 class Move: public Menu
 {

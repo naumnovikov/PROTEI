@@ -7,7 +7,7 @@ void Protocol::execute(){
     }
     app.setProtocol(newProtocol);
     spdlog::info("Protocol changed to {}", (newProtocol == TypeOfProtocol::JSON ? "JSON" : "BINARY"));
-    std::cout << "Status set to: ";
+    std::cout << "Protocol set to: ";
     printTypeOfProtocol(newProtocol);
     std::cout << "\n";
 }

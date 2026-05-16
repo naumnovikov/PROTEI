@@ -1,21 +1,24 @@
-#include "app.h"
-
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
-// TO DO:
-//     -Try to decrease quantity of exceptions
-//     -stringstream replacement (depricated)
-//     -Probably add CTest for better testing
+#include "app.h"
+#include "server.h"
 
 void init_logger();
 
 int main()
 {
     init_logger();
-    App app;
-    app.interact();
+    #if defined(APP)
+        App app;
+        app.interact();
+    #elif defined(SERVER)
+        Server server;
+        server.interact();
+    #else
+        std::cerr << "Wrong macro!\n";
+    #endif
     return 0;
 }
 

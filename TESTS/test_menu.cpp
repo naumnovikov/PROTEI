@@ -1,10 +1,10 @@
+#include <gtest/gtest.h>
+
 #include "active.h"
 #include "move.h"
 #include "exit.h"
 #include "protocol.h"
 #include "app.h"
-
-#include <gtest/gtest.h>
 
 TEST(ActiveTest, SetActiveWhenNonActive) {
     App app;
@@ -24,7 +24,7 @@ TEST(ActiveTest, SetSameStatusDoesNothing) {
 TEST(MoveTest, UpdateLocation) {
     App app;
     app.setStatus(Status::ACTIVE);
-    std::vector<float>& locRef{app.getLocationForMoving()};
+    std::vector<float>& locRef{app.getDeviceLocation()};
     locRef = {0, 0, 0};
 
     std::vector<float> newLoc = {5.0f, 6.0f, 7.0f};

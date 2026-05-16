@@ -1,14 +1,11 @@
 #ifndef APP_H
 #define APP_H
 
-#include "networkaddress.h"
-
 #include <iostream>
-#include <vector>
-#include <nlohmann/json.hpp>
-#include <string_view>
 
-using json = nlohmann::json;
+#include "networkaddress.h"
+#include "jsonparser.h"
+#include "workingstate.h"
 
 struct Device{
     NetworkAddress socket;
@@ -31,23 +28,13 @@ enum class TypeOfProtocol{
 
 void printTypeOfProtocol(TypeOfProtocol typeOfProtocol) noexcept;
 
-enum class AppWorkingState{     // only for loop in interact()
-    WORKING, NOT_WORKING
-};
-
 class App{
 private:
     Device device;
     Status status{Status::NON_ACTIVE};
     TypeOfProtocol typeOfProtocol{TypeOfProtocol::JSON};
-    AppWorkingState appWorkingState{AppWorkingState::WORKING};
+    WorkingState appWorkingState{WorkingState::WORKING};
 
-    bool validateJSONOnRequiredFileds(const json& json_file) noexcept;
-    bool isIPValid(std::string_view ip) noexcept;
-    bool isIMEIValid(const std::vector<char>& imei) noexcept;
-    bool isIMSIValid(const std::vector<char>& imsi) noexcept;
-    bool isLocationValid(const std::vector<float>& location) noexcept;
-    void setValues(const json& json_data);
     void printMenu() noexcept;
     std::string inputCommand();
 public:
@@ -64,11 +51,16 @@ public:
     void setStatus(Status statusParam) noexcept {status = statusParam;}
     TypeOfProtocol getProtocol() const noexcept {return typeOfProtocol;}
     void setProtocol(TypeOfProtocol typeOfProtocolParam) noexcept {typeOfProtocol = typeOfProtocolParam;}
-    void setAppWorkingState(AppWorkingState appWorkingStateParam) noexcept {appWorkingState = appWorkingStateParam;}
-    std::vector<float>& getLocationForMoving() noexcept {return device.location;}
-
+    void setAppWorkingState(WorkingState appWorkingStateParam) noexcept {appWorkingState = appWorkingStateParam;}
+    std::vector<float>& getDeviceLocation() noexcept {return device.location;} 
     const Device& getDevice() const noexcept {return device;}
-    bool isWorking() const noexcept {return appWorkingState == AppWorkingState::WORKING ? true : false;}
+    void setDeviceSocket(NetworkAddress socketParam) noexcept {device.socket = socketParam;}
+    void setDeviceIMEI(std::vector<char> imeiParam) noexcept {device.imei = imeiParam;}
+    void setDeviceIMSI(std::vector<char> imsiParam) noexcept {device.imsi = imsiParam;}
+    void setDeviceLocation(std::vector<float> locationParam) noexcept {device.location = locationParam;}
+    void setDeviceConfig(std::string configParam) noexcept {device.config = configParam;}
+    void setDeviceNodes(std::string nodesParam) noexcept {device.nodes = nodesParam;}
+    bool isWorking() const noexcept {return appWorkingState == WorkingState::WORKING ? true : false;}
 };
 
 

@@ -1,6 +1,6 @@
-#include "app.h"
-
 #include <gtest/gtest.h>
+
+#include "app.h"
 
 TEST(InputParsingTest, SimpleCommand) {
     App app;
