@@ -84,13 +84,11 @@ void App::ProcessMOVE(const std::vector<std::string>& tokens){
     if (status == Status::NON_ACTIVE){
         throw std::logic_error("Cannot move as status is NON_ACTIVE");
     }
-    size_t tokens_quantity{0};
-    if (tokens.size() < 2) {
+    size_t tokens_quantity{tokens.size()};
+    if (tokens_quantity < 2) {
         throw std::invalid_argument("MOVE must get at least 1 argument");
-    }else if (tokens.size() > 4){
+    }else if (tokens_quantity > 4){
         spdlog::warn("MOVE: too many arguments, skipping extras");
-    }else{
-        tokens_quantity = tokens.size();
     }
     std::vector<float> new_location;
     try {
@@ -157,7 +155,7 @@ void App::interact(){
         spdlog::error("Configuration error: {}", e.what());
         return;
     }catch(...){
-        spdlog::error("Configuration error: {}");
+        spdlog::error("Configuration error");
         return;
     }
 

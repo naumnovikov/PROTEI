@@ -60,8 +60,8 @@ bool Server::isExitCommand(std::string firstToken){
 }
 
 void Server::processPositionInput(std::vector<std::string> tokens){  
-    size_t tokensSize{tokens.size()};
-    if (tokensSize == 0){
+    size_t tokens_quantity{tokens.size()};
+    if (tokens_quantity == 0){
         throw std::invalid_argument("Empty input");
     }
 
@@ -72,11 +72,10 @@ void Server::processPositionInput(std::vector<std::string> tokens){
         return;
     }    
 
-    size_t tokens_quantity{0};
-    if (tokensSize != 3) {
+
+    if (tokens_quantity != 3) {
         throw std::invalid_argument("Input must have 3 arguments");
     }
-    tokens_quantity = tokens.size();
 
 
 

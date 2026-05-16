@@ -15,6 +15,7 @@ private:
     std::string inputPosition();
     std::vector<std::string> interpretateInput(std::string input_buffer);
     void processPositionInput(std::vector<std::string> tokens);
+    bool isExitCommand(std::string firstToken);
 public:
     Server(){}
 
@@ -23,7 +24,6 @@ public:
 
     void interact();
 
-    bool isExitCommand(std::string firstToken);
     uint16_t getPort() noexcept {return port;}
     std::vector<float> getPosition() noexcept {return position;}
     void setPort(uint16_t portParam) noexcept {port = portParam;}

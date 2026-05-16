@@ -54,7 +54,7 @@ bool JSONParser::isIMEIValid(const std::vector<char>& imei) noexcept{
 }
 
 bool JSONParser::isIMSIValid(const std::vector<char>& imsi) noexcept{
-    if (imsi.size() > 15){
+    if (imsi.size() > 15 || imsi.size() < 1){
         spdlog::error("Wrong IMSI: no valid size");
         return false;
     }
@@ -98,7 +98,7 @@ void JSONParser::setValuesApp(const json& json_data, App& app){
 
     std::vector<float> location{json_data["location"].get<std::vector<float>>()};
     if (!isLocationValid(location)){
-        throw std::invalid_argument("No valid lcoation in file");
+        throw std::invalid_argument("No valid location in file");
     }
     app.setDeviceLocation(std::move(location));
 
@@ -139,7 +139,7 @@ void JSONParser::configurateApp(std::string json_filenameParam, App& app){
     json json_data;
     try{
         json_data = json::parse(json_file);
-    }catch (nlohmann::detail::parse_error){
+    }catch (const nlohmann::detail::parse_error&){
         spdlog::error("configurate: JSON parse error in file {}", json_filenameParam);
         json_file.close();
         throw std::invalid_argument("JSON parse error in file {}" + json_filenameParam);
