@@ -38,9 +38,9 @@ cmake .. -DCMAKE_BUILD_TYPE=Release
 cmake --build .
 ./PROTEI
 ```
-NB: Пока нет Pull Request, клонируется проект через ветку task_01_02:
+NB: Пока нет Pull Request, клонируется проект через develop:
 ```bash
-git clone -b task_01_02 https://github.com/naumnovikov/PROTEI.git
+git clone -b develop https://github.com/naumnovikov/PROTEI.git
 ```
 ### Сборка и запуск тестов
 ```bash
