@@ -1,6 +1,6 @@
-#include "../APP/app/networkaddress.h"
-
 #include <gtest/gtest.h>
+
+#include "networkaddress.h"
 
 TEST(NetworkAddressTest, StringConstructorValid) {
     NetworkAddress test("192.168.1.100", "8080");

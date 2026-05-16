@@ -1,12 +1,16 @@
-#include "app.h"
-
-#include <gtest/gtest.h>
 #include <fstream>
 #include <cstdio>
+
+#include <gtest/gtest.h>
+
+#include "app.h"
+#include "server.h"
 
 class ConfigurateTest : public ::testing::Test {
 protected:
     App app;
+    Server server;
+    JSONParser parser;
     std::string tempFilename;
 
     void createTempJson(const std::string& content) {
@@ -22,7 +26,7 @@ protected:
     }
 };
 
-TEST_F(ConfigurateTest, ValidConfigSetAllFields) {
+TEST_F(ConfigurateTest, ValidConfigSetAllFieldsInApp) {
     std::string json = R"({
         "ip": "10.20.30.1",
         "port": 2048,
@@ -33,7 +37,7 @@ TEST_F(ConfigurateTest, ValidConfigSetAllFields) {
         "nodes": "node1,node2"
     })";
     createTempJson(json);
-    EXPECT_NO_THROW(app.configurate(tempFilename));
+    EXPECT_NO_THROW(parser.configurateApp(tempFilename, app));
 
     const auto& dev{app.getDevice()};
     EXPECT_EQ(dev.socket.getIp(), "10.20.30.1");
@@ -48,6 +52,19 @@ TEST_F(ConfigurateTest, ValidConfigSetAllFields) {
     EXPECT_EQ(dev.nodes, "node1,node2");
 }
 
+TEST_F(ConfigurateTest, ValidConfigSetAllFieldsInServer) {
+    std::string json = R"({
+        "port": 2048,
+        "position": [55.75, 37.61, 23]
+    })";
+    createTempJson(json);
+    JSONParser parser;
+    EXPECT_NO_THROW(parser.configurateServer(tempFilename, server));
+
+    EXPECT_EQ(server.getPort(), 2048);
+    ASSERT_EQ(server.getPosition().size(), 3);
+}
+
 TEST_F(ConfigurateTest, NoValidIMEI) {
     std::string json = R"({
         "ip": "10.20.30.1",
@@ -59,7 +76,7 @@ TEST_F(ConfigurateTest, NoValidIMEI) {
         "nodes": "node1,node2"
     })";
     createTempJson(json);
-    EXPECT_THROW(app.configurate(tempFilename), std::invalid_argument);
+    EXPECT_THROW(parser.configurateApp(tempFilename, app), std::invalid_argument);
 }
 
 TEST_F(ConfigurateTest, NoValidIMSI) {
@@ -73,7 +90,7 @@ TEST_F(ConfigurateTest, NoValidIMSI) {
         "nodes": "node1,node2"
     })";
     createTempJson(json);
-    EXPECT_THROW(app.configurate(tempFilename), std::invalid_argument);
+    EXPECT_THROW(parser.configurateApp(tempFilename, app), std::invalid_argument);
 }
 
 TEST_F(ConfigurateTest, NoValidLocation) {
@@ -87,23 +104,23 @@ TEST_F(ConfigurateTest, NoValidLocation) {
         "nodes": "node1,node2"
     })";
     createTempJson(json);
-    EXPECT_THROW(app.configurate(tempFilename), std::invalid_argument);
+    EXPECT_THROW(parser.configurateApp(tempFilename, app), std::invalid_argument);
 }
 
 TEST_F(ConfigurateTest, MissingRequiredFieldsThrows) {
     std::string json{R"({"port": 8080})"};
     createTempJson(json);
-    EXPECT_THROW(app.configurate(tempFilename), std::invalid_argument);
+    EXPECT_THROW(parser.configurateApp(tempFilename, app), std::invalid_argument);
 }
 
 TEST_F(ConfigurateTest, InvalidLastByteThrows) {
     std::string json{R"({"ip": "10.0.0.0", "port": 1024})"};
     createTempJson(json);
-    EXPECT_THROW(app.configurate(tempFilename), std::invalid_argument);
+    EXPECT_THROW(parser.configurateApp(tempFilename, app), std::invalid_argument);
 }
 
 TEST_F(ConfigurateTest, PortOutOfRangeThrows) {
     std::string json{R"({"ip": "10.0.0.1", "port": 80})"};
     createTempJson(json);
-    EXPECT_THROW(app.configurate(tempFilename), std::invalid_argument);
+    EXPECT_THROW(parser.configurateApp(tempFilename, app), std::invalid_argument);
 }

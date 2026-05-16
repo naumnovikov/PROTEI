@@ -4,31 +4,14 @@ project(PROTEI LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(PROTEI
-    main.cpp
-    APP/app/app.h
+set(COMMON_SOURCES
     APP/app/app.cpp
-    APP/app/networkaddress.h
-    APP/app/networkaddress.cpp
-    APP/menu/menu.h
-    APP/menu/active.h
     APP/menu/active.cpp
-    APP/menu/exit.h
     APP/menu/exit.cpp
-    APP/menu/protocol.h
     APP/menu/protocol.cpp
-    APP/menu/move.h
     APP/menu/move.cpp
-    CORE/core/core.h
-    CORE/core/core.cpp
-)
-
-target_include_directories(PROTEI PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/APP
-    ${CMAKE_CURRENT_SOURCE_DIR}/APP/app
-    ${CMAKE_CURRENT_SOURCE_DIR}/APP/menu
-    ${CMAKE_CURRENT_SOURCE_DIR}/CORE
-    ${CMAKE_CURRENT_SOURCE_DIR}/CORE/core
+    CORE/core/server.cpp
+    COMMON/jsonparser.cpp
 )
 
 include(FetchContent)
@@ -39,7 +22,6 @@ FetchContent_Declare(
     GIT_TAG v3.11.3
 )
 FetchContent_MakeAvailable(json)
-target_link_libraries(PROTEI PRIVATE nlohmann_json::nlohmann_json)
 
 FetchContent_Declare(
     spdlog
@@ -47,7 +29,6 @@ FetchContent_Declare(
     GIT_TAG v1.13.0
 )
 FetchContent_MakeAvailable(spdlog)
-target_link_libraries(PROTEI PRIVATE spdlog::spdlog)
 
 FetchContent_Declare(
     googletest
@@ -56,11 +37,30 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
-configure_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/DATA/config.json
-    ${CMAKE_CURRENT_BINARY_DIR}/config.json
-    COPYONLY
-)
+function(target_add_include_dirs TARGET)
+    target_include_directories(${TARGET} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/APP
+        ${CMAKE_CURRENT_SOURCE_DIR}/APP/app
+        ${CMAKE_CURRENT_SOURCE_DIR}/APP/menu
+        ${CMAKE_CURRENT_SOURCE_DIR}/CORE
+        ${CMAKE_CURRENT_SOURCE_DIR}/CORE/core
+        ${CMAKE_CURRENT_SOURCE_DIR}/COMMON
+    )
+endfunction()
+
+add_executable(app main.cpp ${COMMON_SOURCES})
+target_compile_definitions(app PRIVATE APP)
+target_link_libraries(app PRIVATE nlohmann_json::nlohmann_json spdlog::spdlog)
+target_add_include_dirs(app)
+
+add_executable(server main.cpp ${COMMON_SOURCES})
+target_compile_definitions(server PRIVATE SERVER)
+target_link_libraries(server PRIVATE nlohmann_json::nlohmann_json spdlog::spdlog)
+target_add_include_dirs(server)
+set_target_properties(server PROPERTIES EXCLUDE_FROM_ALL TRUE)
+
+configure_file(DATA/config.json ${CMAKE_CURRENT_BINARY_DIR}/config.json COPYONLY)
+configure_file(DATA/serverconfig.json ${CMAKE_CURRENT_BINARY_DIR}/serverconfig.json COPYONLY)
 
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/TESTS)
     add_subdirectory(TESTS)

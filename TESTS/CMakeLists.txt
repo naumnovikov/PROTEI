@@ -5,7 +5,8 @@ set(PRODUCTION_SOURCES
     ${CMAKE_SOURCE_DIR}/APP/menu/exit.cpp
     ${CMAKE_SOURCE_DIR}/APP/menu/protocol.cpp
     ${CMAKE_SOURCE_DIR}/APP/menu/move.cpp
-    ${CMAKE_SOURCE_DIR}/CORE/core/core.cpp
+    ${CMAKE_SOURCE_DIR}/CORE/core/server.cpp       
+    ${CMAKE_SOURCE_DIR}/COMMON/jsonparser.cpp         
 )
 
 set(TEST_SOURCES
@@ -26,6 +27,7 @@ target_include_directories(protei_tests PRIVATE
     ${CMAKE_SOURCE_DIR}/APP/menu
     ${CMAKE_SOURCE_DIR}/CORE
     ${CMAKE_SOURCE_DIR}/CORE/core
+    ${CMAKE_SOURCE_DIR}/COMMON
 )
 
 target_link_libraries(protei_tests PRIVATE
