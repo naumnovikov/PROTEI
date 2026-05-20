@@ -259,7 +259,7 @@ void App::interact(){
         return;
     }
 
-    if(socketWorker.connectAppSocketToServer(sock, device.socket.getPort(), device.socket.getIpString().c_str()) < 0) {
+    if(socketWorker.connectAppSocketToServer(sock, 2000, "192.168.0.105") < 0) {
         spdlog::warn("Connection error");
         return;
     }
