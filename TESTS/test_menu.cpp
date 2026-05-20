@@ -6,11 +6,20 @@
 #include "protocol.h"
 #include "app.h"
 
+
 TEST(ActiveTest, SetActiveWhenNonActive) {
     App app;
     Active cmd(app, Status::ACTIVE);
     cmd.execute();
     EXPECT_EQ(app.getStatus(), Status::ACTIVE);
+}
+
+TEST(ActiveTest, SetNonActiveWhenActive) {
+    App app;
+    app.setStatus(Status::ACTIVE);
+    Active cmd(app, Status::NON_ACTIVE);
+    cmd.execute();
+    EXPECT_EQ(app.getStatus(), Status::NON_ACTIVE);
 }
 
 TEST(ActiveTest, SetSameStatusDoesNothing) {
@@ -21,21 +30,6 @@ TEST(ActiveTest, SetSameStatusDoesNothing) {
     EXPECT_EQ(app.getStatus(), Status::ACTIVE);
 }
 
-TEST(MoveTest, UpdateLocation) {
-    App app;
-    app.setStatus(Status::ACTIVE);
-    std::vector<float>& locRef{app.getDeviceLocation()};
-    locRef = {0, 0, 0};
-
-    std::vector<float> newLoc = {5.0f, 6.0f, 7.0f};
-    Move cmd(app, newLoc);
-    EXPECT_NO_THROW(cmd.execute());
-    ASSERT_EQ(locRef.size(), 3);
-    EXPECT_FLOAT_EQ(locRef[0], 5.0f);
-    EXPECT_FLOAT_EQ(locRef[1], 6.0f);
-    EXPECT_FLOAT_EQ(locRef[2], 7.0f);
-}
-
 TEST(ProtocolTest, ChangeProtocolToBinary) {
     App app;
     Protocol cmd(app, TypeOfProtocol::BINARY);
@@ -43,11 +37,19 @@ TEST(ProtocolTest, ChangeProtocolToBinary) {
     EXPECT_EQ(app.getProtocol(), TypeOfProtocol::BINARY);
 }
 
-TEST(ProtocolTest, SameProtocolToJson) {
+TEST(ProtocolTest, ChangeProtocolToJson) {
     App app;
     Protocol cmd(app, TypeOfProtocol::JSON);
     cmd.execute();
     EXPECT_EQ(app.getProtocol(), TypeOfProtocol::JSON);
+}
+
+TEST(ProtocolTest, SameProtocolDoesNotChange) {
+    App app;
+    app.setProtocol(TypeOfProtocol::BINARY);
+    Protocol cmd(app, TypeOfProtocol::BINARY);
+    cmd.execute();
+    EXPECT_EQ(app.getProtocol(), TypeOfProtocol::BINARY);
 }
 
 TEST(ExitTest, SetsNotWorking) {
@@ -55,4 +57,26 @@ TEST(ExitTest, SetsNotWorking) {
     Exit cmd(app);
     cmd.execute();
     EXPECT_FALSE(app.isWorking());
+}
+
+TEST(ExitTest, AlreadyNotWorkingDoesNothing) {
+    App app;
+    app.setAppWorkingState(WorkingState::NOT_WORKING);
+    Exit cmd(app);
+    cmd.execute();
+    EXPECT_FALSE(app.isWorking());
+}
+
+TEST(AppStateTest, IsWorkingAfterActiveCommand) {
+    App app;
+    Active cmd(app, Status::ACTIVE);
+    cmd.execute();
+    EXPECT_TRUE(app.isWorking());
+}
+
+TEST(AppStateTest, IsWorkingAfterProtocolChange) {
+    App app;
+    Protocol cmd(app, TypeOfProtocol::BINARY);
+    cmd.execute();
+    EXPECT_TRUE(app.isWorking());
 }

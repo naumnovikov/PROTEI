@@ -2,6 +2,15 @@
 #include <ctype.h>
 #include <sstream>
 #include <numeric>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <cstring>
+#include <cerrno>
+#include <cmath>
+
 
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -28,12 +37,12 @@ void printTypeOfProtocol(TypeOfProtocol typeOfProtocol) noexcept{
         std::cout << "JSON";
     }else if (typeOfProtocol == TypeOfProtocol::BINARY){
         std::cout << "BINARY";
-    }else{
+    }else [[unlikely]]{
         spdlog::warn("Unknown TypeOfProtocol value");
     }
 }
 
-void App::printMenu() noexcept{
+void App::printMenu() const noexcept{
     std::cout << "App status: ";
     printStatus(status);
     std::cout << '\n';
@@ -47,12 +56,12 @@ void App::printMenu() noexcept{
     std::cout << "4. EXIT\n";
 }
 
-std::vector<std::string> App::interpretateInputCommand(std::string command_buffer){
+std::vector<std::string> App::interpretateInputCommand(std::string command_buffer) {
     std::vector<std::string> tokens;
     std::istringstream iss(std::move(command_buffer));
     std::string token;
     while (iss >> token){
-        if (!token.empty()){
+        if (!token.empty()) [[likely]]{
             tokens.push_back(std::move(token));
         }
     }
@@ -60,7 +69,7 @@ std::vector<std::string> App::interpretateInputCommand(std::string command_buffe
 }
 
 void App::ProcessACTIVE(const std::vector<std::string>& tokens){
-    if (tokens.size() < 2) {
+    if (tokens.size() < 2) [[unlikely]]{
         throw std::invalid_argument("ACTIVE without arguments");
     }
 
@@ -75,31 +84,34 @@ void App::ProcessACTIVE(const std::vector<std::string>& tokens){
     }else if (arg == "FALSE" || arg == "0"){
         Active cmd(*this, Status::NON_ACTIVE);
         cmd.execute();
-    }else{
+    }else [[unlikely]]{
         spdlog::warn("Invalid argument for ACTIVE");
     }
 }
 
-void App::ProcessMOVE(const std::vector<std::string>& tokens){
+void App::ProcessMOVE(std::vector<std::string> tokens, int sock){
     if (status == Status::NON_ACTIVE){
         throw std::logic_error("Cannot move as status is NON_ACTIVE");
     }
-    size_t tokens_quantity{tokens.size()};
-    if (tokens_quantity < 2) {
+    std::size_t tokens_quantity{tokens.size()};
+    if (tokens_quantity < 2) [[unlikely]]{
         throw std::invalid_argument("MOVE must get at least 1 argument");
     }else if (tokens_quantity > 4){
         spdlog::warn("MOVE: too many arguments, skipping extras");
     }
+    if (tokens_quantity > 3){
+        tokens_quantity = 3;
+    }
     std::vector<float> new_location;
     try {
-        for (size_t i{1}; i < tokens_quantity; ++i){
+        for (std::size_t i{1}; i < tokens_quantity; ++i){
             new_location.push_back(std::stof(tokens[i]));
         }
     } catch (...) {
         spdlog::error("MOVE: invalid number format");
         throw std::invalid_argument("Invalid number format");
     }
-    Move cmd(*this, new_location);
+    Move cmd(*this, new_location, sock);
     cmd.execute();
 }
 
@@ -112,7 +124,7 @@ void App::ProcessEXIT(const std::vector<std::string>& tokens){
     cmd.execute();
 }
 void App::ProcessPROTOCOL(const std::vector<std::string>& tokens){
-    if (tokens.size() < 2) {
+    if (tokens.size() < 2) [[unlikely]]{
         throw std::invalid_argument("PROTOCOL without arguments");
     }
     std::string arg{tokens[1]};
@@ -134,7 +146,7 @@ void App::ProcessPROTOCOL(const std::vector<std::string>& tokens){
 std::string App::inputCommand(){
     std::cout << ">> ";
     std::string command_buffer;
-    if (!std::getline(std::cin, command_buffer)){
+    if (!std::getline(std::cin, command_buffer)) [[unlikely]]{
         appWorkingState = WorkingState::NOT_WORKING;
         spdlog::error("Input stream closed or error");
         throw std::runtime_error("Input stream closed or error");
@@ -142,23 +154,7 @@ std::string App::inputCommand(){
     return command_buffer;
 }
 
-void App::interact(){
-    spdlog::info("Configuring from config.json.");
-    std::string json_filename{"config.json"};
-    JSONParser parser;
-    try{
-        parser.configurateApp(std::move(json_filename), *this);
-    }catch(const std::invalid_argument& e){
-        spdlog::error("Configuration error: {}", e.what());
-        return;
-    }catch(const std::out_of_range& e){
-        spdlog::error("Configuration error: {}", e.what());
-        return;
-    }catch(...){
-        spdlog::error("Configuration error");
-        return;
-    }
-
+void App::processInteract(int sock){
     while (appWorkingState == WorkingState::WORKING){
         printMenu();
         std::string command_buffer;
@@ -168,12 +164,16 @@ void App::interact(){
             break;
         }
 
-        if (command_buffer.empty()){
+        if (command_buffer.empty())[[unlikely]] {
             continue;
         }
         std::vector<std::string> tokens{interpretateInputCommand(std::move(command_buffer))};
 
-        std::string input_command{tokens.at(0)};
+        if (tokens.empty()){
+            continue;
+        }
+
+        std::string input_command{tokens[0]};
         for (char& c : input_command){
             c = std::toupper(c);
         }
@@ -190,7 +190,7 @@ void App::interact(){
             }
         }else if (input_command == "MOVE"){
             try{
-                ProcessMOVE(tokens);
+                ProcessMOVE(tokens, sock);
             }catch(const std::invalid_argument& e){
                 spdlog::warn("{}", e.what());
                 continue;
@@ -224,11 +224,49 @@ void App::interact(){
                 continue;
             }
         }
-        else {
+        else [[unlikely]] {
             spdlog::warn("Unknown command: '{}'", input_command);
             continue;
         }
     }
+}
+
+void App::interact(){
+    spdlog::info("Configuring from config.json.");
+    std::string json_filename{"config.json"};
+    JSONParser parser;
+    try{
+        parser.configurateApp(std::move(json_filename), *this);
+    }catch(const std::invalid_argument& e){
+        spdlog::error("Configuration error: {}", e.what());
+        return;
+    }catch(const std::out_of_range& e){
+        spdlog::error("Configuration error: {}", e.what());
+        return;
+    }catch(...){
+        spdlog::error("Configuration error");
+        return;
+    }
+
+
+    //COPYPASTED FROM 
+    //https://rsdn.org/article/unix/sockets.xml
+
+
+    int sock{socket(AF_INET, SOCK_STREAM, 0)}; // 0 means TCP by default 
+    if (sock < 0) [[unlikely]]{
+        spdlog::warn("Socket initialization error");
+        return;
+    }
+
+    if(socketWorker.connectAppSocketToServer(sock, device.socket.getPort(), device.socket.getIpString().c_str()) < 0) {
+        spdlog::warn("Connection error");
+        return;
+    }
+
+    processInteract(sock);
+
+    close(sock);
 }
 
 

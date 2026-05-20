@@ -6,6 +6,7 @@
 #include "networkaddress.h"
 #include "jsonparser.h"
 #include "workingstate.h"
+#include "socketWorker.h"
 
 struct Device{
     NetworkAddress socket;
@@ -34,18 +35,19 @@ private:
     Status status{Status::NON_ACTIVE};
     TypeOfProtocol typeOfProtocol{TypeOfProtocol::JSON};
     WorkingState appWorkingState{WorkingState::WORKING};
+    SocketWorker socketWorker;
 
-    void printMenu() noexcept;
+    void printMenu() const noexcept;
     std::string inputCommand();
-public:
-    std::vector<std::string> interpretateInputCommand(std::string command_buffer);
+    void processInteract(int sock);
     void ProcessACTIVE(const std::vector<std::string>& tokens);
-    void ProcessMOVE(const std::vector<std::string>& tokens);
+    void ProcessMOVE(std::vector<std::string> tokens, int sock);
     void ProcessEXIT(const std::vector<std::string>& tokens);
     void ProcessPROTOCOL(const std::vector<std::string>& tokens);
+    std::vector<std::string> interpretateInputCommand(std::string command_buffer);
     void configurate(std::string json_filenameParam);
+public:
     void interact();
-
 
     Status getStatus() const noexcept {return status;}
     void setStatus(Status statusParam) noexcept {status = statusParam;}
