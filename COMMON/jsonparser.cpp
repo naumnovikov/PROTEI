@@ -199,5 +199,5 @@ void JSONParser::configurateServer(std::string json_filenameParam, Server& serve
     }catch(...){
         throw std::invalid_argument("Unknown error with parsing file {}" + json_filenameParam);
     }
-    spdlog::info("Server configured: port={}, position={}", server.getPort(), server.getIp(), server.getPosition());
+    spdlog::info("Server configured: port={}, IP={}", server.getPort(), server.getIp(), server.getPosition());
 }
