@@ -2,11 +2,12 @@
 
 ### Основная программа
 ```bash
-git clone -b task_03_part1 https://github.com/naumnovikov/PROTEI.git
+git clone -b task_03 https://github.com/naumnovikov/PROTEI.git
 cd PROTEI
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 ```
+NB: В нынешней логике работы App нужно сначала запускать сервер, а только потом App. В будущем это будет дорабатываться.
 ### Сборка и запуск основного приложения App
 ```bash
 cmake --build .
@@ -19,6 +20,7 @@ cmake --build . --target server
 ```
 ### Сборка и запуск тестов
 ```bash
-cmake --build . --target protei_tests
- ./TESTS/protei_tests
+cmake -DBUILD_TESTS=ON ..
+cmake --build .
+./TESTS/protei_tests
 ```
