@@ -19,6 +19,7 @@ public:
     NetworkAddress(const std::string& ip_adrressParam, const std::string& portParam);
 
     std::string_view getIp() const { return ip; }
+    std::string getIpString() const { return ip; }
     uint16_t getPort() const { return port; }
 };
 

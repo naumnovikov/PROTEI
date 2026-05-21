@@ -1,7 +1,7 @@
+#include <gtest/gtest.h>
+
 #include <fstream>
 #include <cstdio>
-
-#include <gtest/gtest.h>
 
 #include "app.h"
 #include "server.h"
@@ -27,7 +27,7 @@ protected:
 };
 
 TEST_F(ConfigurateTest, ValidConfigSetAllFieldsInApp) {
-    std::string json = R"({
+    std::string json{R"({
         "ip": "10.20.30.1",
         "port": 2048,
         "imei": [1, 2, 3, 4, 1, 1, 2, 3, 4, 1, 1, 2, 3, 4, 1],
@@ -35,7 +35,7 @@ TEST_F(ConfigurateTest, ValidConfigSetAllFieldsInApp) {
         "location": [55.75, 37.61, 23],
         "config": "active",
         "nodes": "node1,node2"
-    })";
+    })"};
     createTempJson(json);
     EXPECT_NO_THROW(parser.configurateApp(tempFilename, app));
 
@@ -52,21 +52,8 @@ TEST_F(ConfigurateTest, ValidConfigSetAllFieldsInApp) {
     EXPECT_EQ(dev.nodes, "node1,node2");
 }
 
-TEST_F(ConfigurateTest, ValidConfigSetAllFieldsInServer) {
-    std::string json = R"({
-        "port": 2048,
-        "position": [55.75, 37.61, 23]
-    })";
-    createTempJson(json);
-    JSONParser parser;
-    EXPECT_NO_THROW(parser.configurateServer(tempFilename, server));
-
-    EXPECT_EQ(server.getPort(), 2048);
-    ASSERT_EQ(server.getPosition().size(), 3);
-}
-
 TEST_F(ConfigurateTest, NoValidIMEI) {
-    std::string json = R"({
+    std::string json{R"({
         "ip": "10.20.30.1",
         "port": 2048,
         "imei": [1, 2, 3, 4],
@@ -74,13 +61,13 @@ TEST_F(ConfigurateTest, NoValidIMEI) {
         "location": [55.75, 37.61],
         "config": "active",
         "nodes": "node1,node2"
-    })";
+    })"};
     createTempJson(json);
     EXPECT_THROW(parser.configurateApp(tempFilename, app), std::invalid_argument);
 }
 
 TEST_F(ConfigurateTest, NoValidIMSI) {
-    std::string json = R"({
+    std::string json{R"({
         "ip": "10.20.30.1",
         "port": 2048,
         "imei": [1, 2, 3, 4, 1, 1, 2, 3, 4, 1, 1, 2, 3, 4, 1],
@@ -88,13 +75,13 @@ TEST_F(ConfigurateTest, NoValidIMSI) {
         "location": [55.75, 37.61],
         "config": "active",
         "nodes": "node1,node2"
-    })";
+    })"};
     createTempJson(json);
     EXPECT_THROW(parser.configurateApp(tempFilename, app), std::invalid_argument);
 }
 
 TEST_F(ConfigurateTest, NoValidLocation) {
-    std::string json = R"({
+    std::string json{R"({
         "ip": "10.20.30.1",
         "port": 2048,
         "imei": [1, 2, 3, 4, 1, 1, 2, 3, 4, 1, 1, 2, 3, 4, 1],
@@ -102,7 +89,7 @@ TEST_F(ConfigurateTest, NoValidLocation) {
         "location": [55.75, 37.61],
         "config": "active",
         "nodes": "node1,node2"
-    })";
+    })"};
     createTempJson(json);
     EXPECT_THROW(parser.configurateApp(tempFilename, app), std::invalid_argument);
 }
@@ -114,13 +101,171 @@ TEST_F(ConfigurateTest, MissingRequiredFieldsThrows) {
 }
 
 TEST_F(ConfigurateTest, InvalidLastByteThrows) {
-    std::string json{R"({"ip": "10.0.0.0", "port": 1024})"};
+    std::string json{R"({
+        "ip": "10.0.0.0",
+        "port": 2048,
+        "imei": [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        "imsi": [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        "location": [0,0,0],
+        "config": "",
+        "nodes": ""
+    })"};
     createTempJson(json);
     EXPECT_THROW(parser.configurateApp(tempFilename, app), std::invalid_argument);
 }
 
 TEST_F(ConfigurateTest, PortOutOfRangeThrows) {
-    std::string json{R"({"ip": "10.0.0.1", "port": 80})"};
+    std::string json{R"({
+        "ip": "10.0.0.1",
+        "port": 80,
+        "imei": [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        "imsi": [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        "location": [0,0,0],
+        "config": "",
+        "nodes": ""
+    })"};
     createTempJson(json);
     EXPECT_THROW(parser.configurateApp(tempFilename, app), std::invalid_argument);
+}
+
+TEST_F(ConfigurateTest, ValidMinPortAndIP) {
+    std::string json{R"({
+        "ip": "192.168.0.1",
+        "port": 1024,
+        "imei": [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        "imsi": [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        "location": [0,0,0],
+        "config": "",
+        "nodes": ""
+    })"};
+    createTempJson(json);
+    EXPECT_NO_THROW(parser.configurateApp(tempFilename, app));
+    EXPECT_EQ(app.getDevice().socket.getPort(), 1024);
+    EXPECT_EQ(app.getDevice().socket.getIp(), "192.168.0.1");
+}
+
+TEST_F(ConfigurateTest, ValidMaxPortAndIPLastByte253) {
+    std::string json{R"({
+        "ip": "10.20.30.253",
+        "port": 49151,
+        "imei": [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        "imsi": [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        "location": [0,0,0],
+        "config": "",
+        "nodes": ""
+    })"};
+    createTempJson(json);
+    EXPECT_NO_THROW(parser.configurateApp(tempFilename, app));
+    EXPECT_EQ(app.getDevice().socket.getPort(), 49151);
+    EXPECT_EQ(app.getDevice().socket.getIp(), "10.20.30.253");
+}
+
+TEST_F(ConfigurateTest, ValidIMSIminSize) {
+    std::string json{R"({
+        "ip": "10.20.30.1",
+        "port": 2048,
+        "imei": [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        "imsi": [1],
+        "location": [0,0,0],
+        "config": "",
+        "nodes": ""
+    })"};
+    createTempJson(json);
+    EXPECT_NO_THROW(parser.configurateApp(tempFilename, app));
+    EXPECT_EQ(app.getDevice().imsi.size(), 1);
+}
+
+TEST_F(ConfigurateTest, InvalidJsonSyntax) {
+    std::string json{R"({ "ip": "10.0.0.1", "port": 2048, )"};
+    createTempJson(json);
+    EXPECT_THROW(parser.configurateApp(tempFilename, app), std::invalid_argument);
+}
+
+TEST_F(ConfigurateTest, FileNotFound) {
+    tempFilename = "/tmp/nonexistent_file_12345.json";
+    EXPECT_THROW(parser.configurateApp(tempFilename, app), std::invalid_argument);
+}
+
+TEST_F(ConfigurateTest, ValidConfigSetAllFieldsInServer) {
+    std::string json{R"({
+        "ip": "192.168.0.105",
+        "port": 2048,
+        "position": [55.75, 37.61, 23]
+    })"};
+    createTempJson(json);
+    EXPECT_NO_THROW(parser.configurateServer(tempFilename, server));
+
+    EXPECT_EQ(server.getPort(), 2048);
+    EXPECT_EQ(server.getIp(), "192.168.0.105");
+    ASSERT_EQ(server.getPosition().size(), 3);
+    EXPECT_FLOAT_EQ(server.getPosition()[0], 55.75f);
+    EXPECT_FLOAT_EQ(server.getPosition()[1], 37.61f);
+    EXPECT_FLOAT_EQ(server.getPosition()[2], 23);
+}
+
+TEST_F(ConfigurateTest, ServerInvalidIP) {
+    std::string json{R"({
+        "ip": "10.0.0.0",
+        "port": 2048,
+        "position": [1,2,3]
+    })"};
+    createTempJson(json);
+    EXPECT_THROW(parser.configurateServer(tempFilename, server), std::invalid_argument);
+}
+
+TEST_F(ConfigurateTest, ServerPortOutOfRange) {
+    std::string json{R"({
+        "ip": "10.0.0.1",
+        "port": 80,
+        "position": [1,2,3]
+    })"};
+    createTempJson(json);
+    EXPECT_THROW(parser.configurateServer(tempFilename, server), std::invalid_argument);
+}
+
+TEST_F(ConfigurateTest, ServerInvalidPositionSize) {
+    std::string json{R"({
+        "ip": "10.0.0.1",
+        "port": 2048,
+        "position": [1,2]
+    })"};
+    createTempJson(json);
+    EXPECT_THROW(parser.configurateServer(tempFilename, server), std::invalid_argument);
+}
+
+TEST_F(ConfigurateTest, ServerMissingRequiredFields) {
+    std::string json{R"({"port": 8080})"};
+    createTempJson(json);
+    EXPECT_THROW(parser.configurateServer(tempFilename, server), std::invalid_argument);
+}
+
+TEST_F(ConfigurateTest, ServerValidMinPortAndIP) {
+    std::string json{R"({
+        "ip": "192.168.0.1",
+        "port": 1024,
+        "position": [0,0,0]
+    })"};
+    createTempJson(json);
+    EXPECT_NO_THROW(parser.configurateServer(tempFilename, server));
+    EXPECT_EQ(server.getPort(), 1024);
+    EXPECT_EQ(server.getIp(), "192.168.0.1");
+    ASSERT_EQ(server.getPosition().size(), 3);
+}
+
+TEST_F(ConfigurateTest, ServerValidMaxPortAndIPLastByte253) {
+    std::string json{R"({
+        "ip": "10.20.30.253",
+        "port": 49151,
+        "position": [0,0,0]
+    })"};
+    createTempJson(json);
+    EXPECT_NO_THROW(parser.configurateServer(tempFilename, server));
+    EXPECT_EQ(server.getPort(), 49151);
+    EXPECT_EQ(server.getIp(), "10.20.30.253");
+}
+
+TEST_F(ConfigurateTest, ServerInvalidJsonSyntax) {
+    std::string json{R"({ "ip": "10.0.0.1", "port": 2048 )"};
+    createTempJson(json);
+    EXPECT_THROW(parser.configurateServer(tempFilename, server), std::invalid_argument);
 }

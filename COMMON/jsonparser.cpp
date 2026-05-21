@@ -1,5 +1,6 @@
 #include <fstream>
 #include <utility>
+#include <exception>
 
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/bundled/ranges.h>
@@ -8,25 +9,25 @@
 #include "app.h"
 #include "server.h"
 
-bool JSONParser::validateJSONOnRequiredFiledsForApp(const json& json_data) noexcept{
-    if (!json_data.contains("ip") || !json_data.contains("port") || !json_data.contains("imei") || !json_data.contains("imsi") || !json_data.contains("location") || !json_data.contains("config") || !json_data.contains("nodes")) {
+bool JSONParser::validateJSONOnRequiredFiledsForApp(const json& json_data) const noexcept{
+    if (!json_data.contains("ip") || !json_data.contains("port") || !json_data.contains("imei") || !json_data.contains("imsi") || !json_data.contains("location") || !json_data.contains("config") || !json_data.contains("nodes")) [[unlikely]]{
+        spdlog::error("configurate: Missing required fields");
+        return false;
+    }
+    return true;
+}
+
+bool JSONParser::validateJSONOnRequiredFiledsForServer(const json& json_data) const noexcept{
+    if (!json_data.contains("ip") || !json_data.contains("port") || !json_data.contains("position")) [[unlikely]]{
         spdlog::error("configurate: {}", "Missing required fields");
         return false;
     }
     return true;
 }
 
-bool JSONParser::validateJSONOnRequiredFiledsForServer(const json& json_data) noexcept{
-    if (!json_data.contains("port") || !json_data.contains("position")) {
-        spdlog::error("configurate: {}", "Missing required fields");
-        return false;
-    }
-    return true;
-}
-
-bool JSONParser::isIPValid(std::string_view ip) noexcept{
-    size_t lastDotPos{ip.rfind('.')};
-    if (lastDotPos == std::string::npos || lastDotPos + 1 >= ip.size()) {
+bool JSONParser::isIPValid(std::string_view ip) const noexcept{
+    std::size_t lastDotPos{ip.rfind('.')};
+    if (lastDotPos == std::string::npos || lastDotPos + 1 >= ip.size()) [[unlikely]]{
         spdlog::error("Wrong IP: no valid last byte in '{}'", ip);
         return false;
     }
@@ -38,44 +39,44 @@ bool JSONParser::isIPValid(std::string_view ip) noexcept{
         spdlog::error("Wrong IP: last byte is not a number");
         return false;
     }
-    if (last_byte_val < 1 || last_byte_val > 253) {
+    if (last_byte_val < 1 || last_byte_val > 253) [[unlikely]]{
         spdlog::error("Wrong IP: last byte is out of range(1,253)");
         return false;
     }
     return true;
 }
 
-bool JSONParser::isIMEIValid(const std::vector<char>& imei) noexcept{
-    if (imei.size() != 15){
+bool JSONParser::isIMEIValid(const std::vector<char>& imei) const noexcept{
+    if (imei.size() != 15)[[unlikely]]{
         spdlog::error("Wrong IMEI: no valid size");
         return false;
     }
     return true;
 }
 
-bool JSONParser::isIMSIValid(const std::vector<char>& imsi) noexcept{
-    if (imsi.size() > 15 || imsi.size() < 1){
+bool JSONParser::isIMSIValid(const std::vector<char>& imsi) const noexcept{
+    if (imsi.size() > 15 || imsi.size() < 1)[[unlikely]]{
         spdlog::error("Wrong IMSI: no valid size");
         return false;
     }
     return true;
 }
 
-bool JSONParser::isLocationValid(const std::vector<float>& location) noexcept{
-    if (location.size() !=3){
+bool JSONParser::isLocationValid(const std::vector<float>& location) const noexcept{
+    if (location.size() !=3)[[unlikely]]{
         spdlog::error("Wrong location: no valid size");
         return false;
     }
     return true;
 }
 
-void JSONParser::setValuesApp(const json& json_data, App& app){
-    if (!validateJSONOnRequiredFiledsForApp(json_data)){
+void JSONParser::setValuesApp(const json& json_data, App& app) const{
+    if (!validateJSONOnRequiredFiledsForApp(json_data))[[unlikely]]{
         throw std::invalid_argument("Missing required fields");
     }
     std::string ip{json_data["ip"].get<std::string>()};
 
-    if (!isIPValid(ip)){
+    if (!isIPValid(ip))[[unlikely]]{
         throw std::invalid_argument("No valid IP");
     }
 
@@ -85,19 +86,19 @@ void JSONParser::setValuesApp(const json& json_data, App& app){
     }
 
     std::vector<char> imei{json_data["imei"].get<std::vector<char>>()};
-    if (!isIMEIValid(imei)){
+    if (!isIMEIValid(imei))[[unlikely]]{
         throw std::invalid_argument("No valid IMEI in file");
     }
     app.setDeviceIMEI(std::move(imei));
 
     std::vector<char> imsi{json_data["imsi"].get<std::vector<char>>()};
-    if (!isIMSIValid(imsi)){
+    if (!isIMSIValid(imsi))[[unlikely]]{
         throw std::invalid_argument("No valid IMSI in file");
     }
     app.setDeviceIMSI(std::move(imsi));
 
     std::vector<float> location{json_data["location"].get<std::vector<float>>()};
-    if (!isLocationValid(location)){
+    if (!isLocationValid(location))[[unlikely]]{
         throw std::invalid_argument("No valid location in file");
     }
     app.setDeviceLocation(std::move(location));
@@ -108,10 +109,17 @@ void JSONParser::setValuesApp(const json& json_data, App& app){
     app.setDeviceSocket(std::move(NetworkAddress(ip, port)));
 }
 
-void JSONParser::setValuesServer(const json& json_data, Server& server){
-    if (!validateJSONOnRequiredFiledsForServer(json_data)){
+void JSONParser::setValuesServer(const json& json_data, Server& server) const{
+    if (!validateJSONOnRequiredFiledsForServer(json_data))[[unlikely]]{
         throw std::invalid_argument("Missing required fields");
     }
+
+    std::string ip{json_data["ip"].get<std::string>()};
+
+    if (!isIPValid(ip))[[unlikely]]{
+        throw std::invalid_argument("No valid IP");
+    }
+    server.setIp(std::move(ip));
 
     uint16_t port{json_data["port"].get<uint16_t>()};
     if (port < 1024 || port > 49151) {
@@ -120,14 +128,14 @@ void JSONParser::setValuesServer(const json& json_data, Server& server){
     server.setPort(std::move(port));
 
     std::vector<float> position{json_data["position"].get<std::vector<float>>()};
-    if (!isLocationValid(position)){
+    if (!isLocationValid(position))[[unlikely]]{
         throw std::invalid_argument("No valid position in file");
     }
     server.setPosition(std::move(position));
 }
 
-void JSONParser::configurateApp(std::string json_filenameParam, App& app){
-    if (json_filenameParam.empty()){
+void JSONParser::configurateApp(std::string json_filenameParam, App& app) const{
+    if (json_filenameParam.empty())[[unlikely]]{
         spdlog::error("configurate: JSON filename is empty");
         throw std::invalid_argument("JSON filename is empty");
     }
@@ -160,8 +168,8 @@ void JSONParser::configurateApp(std::string json_filenameParam, App& app){
     spdlog::info("Device configured: IP={}, port={}", app.getDevice().socket.getIp(), app.getDevice().socket.getPort());
 }
 
-void JSONParser::configurateServer(std::string json_filenameParam, Server& server){
-    if (json_filenameParam.empty()){
+void JSONParser::configurateServer(std::string json_filenameParam, Server& server) const{
+    if (json_filenameParam.empty())[[unlikely]]{
         spdlog::error("configurate: JSON filename is empty");
         throw std::invalid_argument("JSON filename is empty");
     }
@@ -191,5 +199,5 @@ void JSONParser::configurateServer(std::string json_filenameParam, Server& serve
     }catch(...){
         throw std::invalid_argument("Unknown error with parsing file {}" + json_filenameParam);
     }
-    spdlog::info("Server configured: port={}, position={}", server.getPort(), server.getPosition());
+    spdlog::info("Server configured: port={}, IP={}", server.getPort(), server.getIp(), server.getPosition());
 }
