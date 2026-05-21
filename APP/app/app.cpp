@@ -100,7 +100,7 @@ void App::ProcessMOVE(std::vector<std::string> tokens, int sock){
         spdlog::warn("MOVE: too many arguments, skipping extras");
     }
     if (tokens_quantity > 3){
-        tokens_quantity = 3;
+        tokens_quantity = 4;
     }
     std::vector<float> new_location;
     try {
