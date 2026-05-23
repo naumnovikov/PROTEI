@@ -110,9 +110,9 @@ void App::ProcessMOVE(std::vector<std::string> tokens, int sock) {
   }
   std::vector<float> new_location;
   try {
-    new_location.push_back(std::stof(tokens[1]));
-    new_location.push_back(std::stof(tokens[2]));
-    new_location.push_back(std::stof(tokens[3]));
+    for (std::size_t i{1}; i < tokens_quantity; ++i){
+      new_location.push_back(std::stof(tokens[i]));
+    }
   } catch (...) {
     SPDLOG_ERROR("MOVE: invalid number format");
     throw std::invalid_argument("Invalid number format");
