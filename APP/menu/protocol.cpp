@@ -2,11 +2,11 @@
 
 void Protocol::execute() {
   if (app.getProtocol() == newProtocol) {
-    spdlog::warn("PROTOCOL: already set to requested protocol");
+    SPDLOG_WARN("PROTOCOL: already set to requested protocol");
     return;
   }
   app.setProtocol(newProtocol);
-  spdlog::info("Protocol changed to {}",
+  SPDLOG_INFO("Protocol changed to {}",
                (newProtocol == TypeOfProtocol::JSON ? "JSON" : "BINARY"));
   std::cout << "Protocol set to: ";
   printTypeOfProtocol(newProtocol);

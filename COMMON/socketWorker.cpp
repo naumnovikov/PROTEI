@@ -80,7 +80,7 @@ void SocketWorker::sendResponceToClient(int sock, uint8_t format,
     responce.push_back(JSONTypeByte);
     responce.insert(responce.end(), json_str.begin(), json_str.end());
   } else [[unlikely]] {
-    spdlog::error("[{}:{}] Unknown protocol format", client_ip, client_port);
+    SPDLOG_ERROR("[{}:{}] Unknown protocol format", client_ip, client_port);
     return;
   }
   send(sock, responce.data(), responce.size(), 0);
@@ -139,7 +139,7 @@ uint32_t SocketWorker::receiveRest_lenInLE(int sock) const {
   std::vector<uint8_t> rest_len_buf(4);
 
   if (!recv_full(sock, rest_len_buf.data(), size_len)) [[unlikely]] {
-    spdlog::error("recv rest_len_buf failed");
+    SPDLOG_ERROR("recv rest_len_buf failed");
     throw std::runtime_error("recv rest_len_buf failed");
   }
   uint32_t tmp;
@@ -147,7 +147,7 @@ uint32_t SocketWorker::receiveRest_lenInLE(int sock) const {
   uint32_t rest_len{ntohl(tmp)};
 
   if (rest_len == 0 || rest_len > 65536) [[unlikely]] {
-    spdlog::error("invalid rest_len {}", rest_len);
+    SPDLOG_ERROR("invalid rest_len {}", rest_len);
     throw std::out_of_range("invalid rest_len");
   }
   return rest_len;
@@ -157,12 +157,12 @@ float SocketWorker::getDistance(int sock, uint32_t rest_len) const {
   std::vector<uint8_t> rest(rest_len);
 
   if (!recv_full(sock, rest.data(), rest_len)) [[unlikely]] {
-    spdlog::error("recv rest failed");
+    SPDLOG_ERROR("recv rest failed");
     return distanceError;
   }
 
   if (rest_len < 1) [[unlikely]] {
-    spdlog::error("empty message");
+    SPDLOG_ERROR("empty message");
     return distanceError;
   }
 
@@ -175,21 +175,21 @@ float SocketWorker::getDistance(int sock, uint32_t rest_len) const {
       json worker = json::parse(json_str);
       distanceResult = worker.value("distance", distanceError);
     } catch (const std::exception& e) {
-      spdlog::warn("JSON parse error: {}", e.what());
+      SPDLOG_WARN("JSON parse error: {}", e.what());
       return distanceError;
     }
   } else if (format == binaryTypeByte) {
     if (rest_len != (protocol_len + float_len)) {
-      spdlog::error("Binary: expected 5 bytes, got {}", rest_len);
+      SPDLOG_ERROR("Binary: expected 5 bytes, got {}", rest_len);
       return distanceError;
     }
     distanceResult = decodeFloatFromBEBytes(rest.data() + 1);
   } else [[unlikely]] {
-    spdlog::error("Unknown format {}", format);
+    SPDLOG_ERROR("Unknown format {}", format);
     return distanceError;
   }
   if (distanceResult == distanceError) [[unlikely]] {
-    spdlog::error("Error receiving distance");
+    SPDLOG_ERROR("Error receiving distance");
     return distanceError;
   }
   return distanceResult;
@@ -219,7 +219,7 @@ bool SocketWorker::sendDistance(int client_sock, uint32_t rest_len,
     return false;
   }
   if (rest_len < 1) [[unlikely]] {
-    spdlog::error("[{}:{}] Empty message", client_ip, client_port);
+    SPDLOG_ERROR("[{}:{}] Empty message", client_ip, client_port);
     return false;
   }
 
@@ -229,7 +229,7 @@ bool SocketWorker::sendDistance(int client_sock, uint32_t rest_len,
 
   if (format == binaryTypeByte) {
     if (rest_len != protocol_len + binary_type_data_len) {
-      spdlog::error("[{}:{}] Binary: expected 12 bytes, got {}", client_ip,
+      SPDLOG_ERROR("[{}:{}] Binary: expected 12 bytes, got {}", client_ip,
                     client_port, rest_len - 1);
       return false;
     }
@@ -249,15 +249,15 @@ bool SocketWorker::sendDistance(int client_sock, uint32_t rest_len,
         z = worker["location"][2].get<float>();
         valid = true;
       } else {
-        spdlog::warn("[{}:{}] JSON missing 'location' array", client_ip,
+        SPDLOG_WARN("[{}:{}] JSON missing 'location' array", client_ip,
                      client_port);
       }
     } catch (const std::exception& e) {
-      spdlog::warn("[{}:{}] JSON parse error: {}", client_ip, client_port,
+      SPDLOG_WARN("[{}:{}] JSON parse error: {}", client_ip, client_port,
                    e.what());
     }
   } else [[unlikely]] {
-    spdlog::warn("[{}:{}] Unknown format", client_ip, client_port);
+    SPDLOG_WARN("[{}:{}] Unknown format", client_ip, client_port);
     return false;
   }
 
@@ -269,7 +269,7 @@ bool SocketWorker::sendDistance(int client_sock, uint32_t rest_len,
       static_cast<float>(std::sqrt(std::pow(std::abs(position[0] - x), 2) +
                                    std::pow(std::abs(position[1] - y), 2) +
                                    std::pow(std::abs(position[2] - z), 2)));
-  spdlog::info("[{}:{}] Received: ({}, {}, {}) -> distance = {}", client_ip,
+  SPDLOG_INFO("[{}:{}] Received: ({}, {}, {}) -> distance = {}", client_ip,
                client_port, x, y, z, distance);
 
   sendResponceToClient(client_sock, format, distance, client_ip, client_port);

@@ -4,7 +4,7 @@ void Move::execute() {
   for (std::size_t i{0}; i < newLocation.size(); ++i) {
     app.getDeviceLocation().at(i) = newLocation.at(i);
   }
-  spdlog::info("Location changed to: {}, {}, {}",
+  SPDLOG_INFO("Location changed to: {}, {}, {}",
                std::to_string(app.getDeviceLocation()[0]),
                std::to_string(app.getDeviceLocation()[1]),
                std::to_string(app.getDeviceLocation()[2]));
@@ -17,7 +17,7 @@ void Move::execute() {
   }
 
   if (send(sock, msg.data(), msg.size(), 0) < 0) [[unlikely]] {
-    spdlog::error("Send error");
+    SPDLOG_ERROR("Send error");
     return;
   }
 
@@ -29,7 +29,7 @@ void Move::execute() {
   } catch (const std::out_of_range& e) {
     return;
   } catch (...) {
-    spdlog::error("Unknown error with rest_len");
+    SPDLOG_ERROR("Unknown error with rest_len");
     return;
   }
 
@@ -40,5 +40,5 @@ void Move::execute() {
   }
 
   std::cout << "Distance = " << distanceResult << '\n';
-  spdlog::info("Received distance: {}", distanceResult);
+  SPDLOG_INFO("Received distance: {}", distanceResult);
 }

@@ -33,7 +33,7 @@ void printStatus(Status status) noexcept {
   } else if (status == Status::NON_ACTIVE) {
     std::cout << "NON_ACTIVE";
   } else {
-    spdlog::warn("Unknown Status value");
+    SPDLOG_ERROR("Unknown Status value");
   }
 }
 
@@ -43,7 +43,7 @@ void printTypeOfProtocol(TypeOfProtocol typeOfProtocol) noexcept {
   } else if (typeOfProtocol == TypeOfProtocol::BINARY) {
     std::cout << "BINARY";
   } else [[unlikely]] {
-    spdlog::warn("Unknown TypeOfProtocol value");
+    SPDLOG_WARN("Unknown TypeOfProtocol value");
   }
 }
 
@@ -91,7 +91,7 @@ void App::ProcessACTIVE(const std::vector<std::string>& tokens) {
     Active cmd(*this, Status::NON_ACTIVE);
     cmd.execute();
   } else [[unlikely]] {
-    spdlog::warn("Invalid argument for ACTIVE");
+    SPDLOG_WARN("Invalid argument for ACTIVE");
   }
 }
 
@@ -103,7 +103,7 @@ void App::ProcessMOVE(std::vector<std::string> tokens, int sock) {
   if (tokens_quantity < MOVE_COMMAND_MIN_TOKENS) [[unlikely]] {
     throw std::invalid_argument("MOVE must get at least 1 argument");
   } else if (tokens_quantity > MOVE_COMMAND_MAX_TOKENS) {
-    spdlog::warn("MOVE: too many arguments, skipping extras");
+    SPDLOG_WARN("MOVE: too many arguments, skipping extras");
   }
   if (tokens_quantity > 3) {
     tokens_quantity = 4;
@@ -114,7 +114,7 @@ void App::ProcessMOVE(std::vector<std::string> tokens, int sock) {
     new_location.push_back(std::stof(tokens[2]));
     new_location.push_back(std::stof(tokens[3]));
   } catch (...) {
-    spdlog::error("MOVE: invalid number format");
+    SPDLOG_ERROR("MOVE: invalid number format");
     throw std::invalid_argument("Invalid number format");
   }
   Move cmd(*this, new_location, sock);
@@ -123,7 +123,7 @@ void App::ProcessMOVE(std::vector<std::string> tokens, int sock) {
 
 void App::ProcessEXIT(const std::vector<std::string>& tokens) {
   if (status == Status::ACTIVE) {
-    spdlog::warn("EXIT denied: status is ACTIVE");
+    SPDLOG_WARN("EXIT denied: status is ACTIVE");
     throw std::logic_error("Cannot exit as status is ACTIVE");
   }
   Exit cmd(*this);
@@ -154,7 +154,7 @@ std::string App::inputCommand() {
   std::string command_buffer;
   if (!std::getline(std::cin, command_buffer)) [[unlikely]] {
     appWorkingState = WorkingState::NOT_WORKING;
-    spdlog::error("Input stream closed or error");
+    SPDLOG_ERROR("Input stream closed or error");
     throw std::runtime_error("Input stream closed or error");
   }
   return command_buffer;
@@ -189,47 +189,47 @@ void App::processInteract(int sock) {
       try {
         ProcessACTIVE(tokens);
       } catch (const std::invalid_argument& e) {
-        spdlog::warn("{}", e.what());
+        SPDLOG_ERROR("{}", e.what());
         continue;
       } catch (...) {
-        spdlog::warn("Unknown ACTIVE error!");
+        SPDLOG_ERROR("Unknown ACTIVE error!");
         continue;
       }
     } else if (input_command == "MOVE") {
       try {
         ProcessMOVE(tokens, sock);
       } catch (const std::invalid_argument& e) {
-        spdlog::warn("{}", e.what());
+        SPDLOG_ERROR("{}", e.what());
         continue;
       } catch (const std::logic_error& e) {
-        spdlog::warn("{}", e.what());
+        SPDLOG_ERROR("{}", e.what());
         continue;
       } catch (...) {
-        spdlog::warn("Unknown MOVE error!");
+        SPDLOG_ERROR("Unknown MOVE error!");
         continue;
       }
     } else if (input_command == "PROTOCOL") {
       try {
         ProcessPROTOCOL(tokens);
       } catch (const std::invalid_argument& e) {
-        spdlog::warn("{}", e.what());
+        SPDLOG_ERROR("{}", e.what());
         continue;
       } catch (...) {
-        spdlog::warn("Unknown PROTOCOL error!");
+        SPDLOG_ERROR("Unknown PROTOCOL error!");
         continue;
       }
     } else if (input_command == "EXIT") {
       try {
         ProcessEXIT(tokens);
       } catch (const std::logic_error& e) {
-        spdlog::warn("{}", e.what());
+        SPDLOG_ERROR("{}", e.what());
         continue;
       } catch (...) {
-        spdlog::warn("Unknown EXIT error!");
+        SPDLOG_ERROR("Unknown EXIT error!");
         continue;
       }
     } else [[unlikely]] {
-      spdlog::warn("Unknown command: '{}'", input_command);
+      SPDLOG_ERROR("Unknown command: '{}'", input_command);
       continue;
     }
   }
@@ -247,13 +247,13 @@ void App::interact() {
   try {
     parser.configurateApp(std::move(json_filename), *this);
   } catch (const std::invalid_argument& e) {
-    spdlog::error("Configuration error: {}", e.what());
+    SPDLOG_ERROR("Configuration error: {}", e.what());
     return;
   } catch (const std::out_of_range& e) {
-    spdlog::error("Configuration error: {}", e.what());
+    SPDLOG_ERROR("Configuration error: {}", e.what());
     return;
   } catch (...) {
-    spdlog::error("Configuration error");
+    SPDLOG_ERROR("Configuration error");
     return;
   }
 
@@ -262,13 +262,13 @@ void App::interact() {
 
   int sock{socket(AF_INET, SOCK_STREAM, 0)};  // 0 means TCP by default
   if (sock < 0) [[unlikely]] {
-    spdlog::warn("Socket initialization error");
+    SPDLOG_ERROR("Socket initialization error");
     return;
   }
 
   if (socketWorker.connectAppSocketToServer(sock, device.server_port,
                                             device.server_ip.c_str()) < 0) {
-    spdlog::warn("Connection error");
+    SPDLOG_ERROR("Connection error");
     return;
   }
 

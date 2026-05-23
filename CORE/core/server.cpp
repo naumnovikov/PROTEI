@@ -18,7 +18,7 @@ Server::Server(Server&& other) noexcept
     : port(other.port), position(other.position) {
   other.port = 0;
   other.position = {0, 0, 0};
-  spdlog::info("Servers' copy-constuctor used");
+  SPDLOG_INFO("Servers' copy-constuctor used");
 }
 
 Server& Server::operator=(Server&& other) noexcept {
@@ -28,7 +28,7 @@ Server& Server::operator=(Server&& other) noexcept {
     other.port = 0;
     other.position = {0, 0, 0};
   }
-  spdlog::info("Servers' move-operator used");
+  SPDLOG_INFO("Servers' move-operator used");
   return *this;
 }
 
@@ -37,7 +37,7 @@ std::string Server::inputPosition() {
   std::string input_buffer;
   if (!std::getline(std::cin, input_buffer)) [[unlikely]] {
     serverWorkingState = WorkingState::NOT_WORKING;
-    spdlog::error("Input stream closed or error");
+    SPDLOG_ERROR("Input stream closed or error");
     throw std::runtime_error("Input stream closed or error");
   }
   return input_buffer;
@@ -75,7 +75,7 @@ void Server::processPositionInput(std::vector<std::string> tokens) {
   std::string firstToken{tokens.at(0)};
   if (isExitCommand(std::move(firstToken))) {
     serverWorkingState = WorkingState::NOT_WORKING;
-    spdlog::info("Exiting...");
+    SPDLOG_INFO("Exiting...");
     return;
   }
 
@@ -89,7 +89,7 @@ void Server::processPositionInput(std::vector<std::string> tokens) {
       new_position.push_back(std::stof(tokens.at(i)));
     }
   } catch (...) {
-    spdlog::error("MOVE: invalid number format");
+    SPDLOG_ERROR("MOVE: invalid number format");
     throw std::invalid_argument("Invalid number format");
   }
 
@@ -97,7 +97,7 @@ void Server::processPositionInput(std::vector<std::string> tokens) {
       std::sqrt(std::pow(std::abs(position.at(0) - new_position.at(0)), 2) +
                 std::pow(std::abs(position.at(1) - new_position.at(1)), 2) +
                 std::pow(std::abs(position.at(2) - new_position.at(2)), 2)))};
-  spdlog::info("Distance is {}", distance);
+  SPDLOG_INFO("Distance is {}", distance);
 }
 
 void Server::processClient(int client_sock, ThreadPool& pool,
@@ -107,10 +107,10 @@ void Server::processClient(int client_sock, ThreadPool& pool,
   tv.tv_usec = 0;
   if (setsockopt(client_sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0)
       [[unlikely]] {
-    spdlog::warn("[{}:{}] Failed to set recv timeout", client_ip, client_port);
+    SPDLOG_WARN("[{}:{}] Failed to set recv timeout", client_ip, client_port);
   }
 
-  spdlog::info("[{}:{}] Client connected", client_ip, client_port);
+  SPDLOG_INFO("[{}:{}] Client connected", client_ip, client_port);
 
   bool client_ok{true};
   while (client_ok && serverWorkingState == WorkingState::WORKING &&
@@ -122,7 +122,7 @@ void Server::processClient(int client_sock, ThreadPool& pool,
     }
     uint32_t rest_len{socketWorker.decodeUint32FromBEBytes(len_buf)};
     if (rest_len == MIN_REST_LEN_BUFFER || rest_len > MAX_REST_LEN_BUFFER) {
-      spdlog::error("[{}:{}] Invalid rest_len {}", client_ip, client_port,
+      SPDLOG_ERROR("[{}:{}] Invalid rest_len {}", client_ip, client_port,
                     rest_len);
       break;
     }
@@ -132,7 +132,7 @@ void Server::processClient(int client_sock, ThreadPool& pool,
     }
   }
   close(client_sock);
-  spdlog::info("[{}:{}] Client disconnected", client_ip, client_port);
+  SPDLOG_INFO("[{}:{}] Client disconnected", client_ip, client_port);
 }
 
 void Server::processClients(int listenerForConnections, ThreadPool& pool) {
@@ -150,10 +150,10 @@ void Server::processClients(int listenerForConnections, ThreadPool& pool) {
                         &tv_for_connections)};
 
     if (activity < 0) {
-      spdlog::error("Listening soket error");
+      SPDLOG_ERROR("Listening soket error");
       return;
     } else if (activity == 0) {
-      spdlog::warn("Zero connnections to listening soket");
+      SPDLOG_WARN("Zero connnections to listening soket");
       return;
     }
 
@@ -163,7 +163,7 @@ void Server::processClients(int listenerForConnections, ThreadPool& pool) {
     int client_sock{accept(listenerForConnections,
                            (struct sockaddr*)&client_addr, &addr_size)};
     if (client_sock < 0) [[unlikely]] {
-      spdlog::error("Accept error: {}", strerror(errno));
+      SPDLOG_ERROR("Accept error: {}", strerror(errno));
       continue;
     }
     char* client_ip{inet_ntoa(client_addr.sin_addr)};
@@ -175,43 +175,43 @@ void Server::processClients(int listenerForConnections, ThreadPool& pool) {
 }
 
 void Server::interact() {
-  spdlog::info("Configuring from serverconfig.json.");
+  SPDLOG_INFO("Configuring from serverconfig.json.");
   std::string json_filename{"serverconfig.json"};
   JSONParser parser;
   try {
     parser.configurateServer(std::move(json_filename), *this);
   } catch (const std::invalid_argument& e) {
-    spdlog::error("Configuration error: {}", e.what());
+    SPDLOG_ERROR("Configuration error: {}", e.what());
     return;
   } catch (const std::out_of_range& e) {
-    spdlog::error("Configuration error: {}", e.what());
+    SPDLOG_ERROR("Configuration error: {}", e.what());
     return;
   } catch (...) {
-    spdlog::error("Configuration error.");
+    SPDLOG_ERROR("Configuration error.");
     return;
   }
 
   int listenerForConnections{socket(AF_INET, SOCK_STREAM, 0)};
   if (listenerForConnections < 0) [[unlikely]] {
-    spdlog::error("listenerForConnections-socket creation error");
+    SPDLOG_ERROR("listenerForConnections-socket creation error");
     return;
   }
 
   if (socketWorker.bindListenerForConnections(
           port, ip.c_str(), listenerForConnections) < 0) [[unlikely]] {
-    spdlog::error("Bind error");
+    SPDLOG_ERROR("Bind error");
     close(listenerForConnections);
     return;
   }
 
   if (listen(listenerForConnections, CONNECTIONS_QUEUE_SIZE_LIMIT) < 0)
       [[unlikely]] {
-    spdlog::error("Listen error");
+    SPDLOG_ERROR("Listen error");
     close(listenerForConnections);
     return;
   }
 
-  spdlog::info("Server listening on {}:{}", getIp(), getPort());
+  SPDLOG_INFO("Server listening on {}:{}", getIp(), getPort());
 
   ThreadPool pool;
   pool.start();
@@ -219,10 +219,10 @@ void Server::interact() {
   try {
     processClients(listenerForConnections, pool);
   } catch (...) {
-    spdlog::error("Unknown exception in processClients");
+    SPDLOG_ERROR("Unknown exception in processClients");
   }
 
   pool.stop();
   close(listenerForConnections);
-  spdlog::info("Server stopped");
+  SPDLOG_INFO("Server stopped");
 }

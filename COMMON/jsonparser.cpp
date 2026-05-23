@@ -26,7 +26,7 @@ bool JSONParser::validateJSONOnRequiredFiledsForApp(
       !json_data.contains("location") || !json_data.contains("config") ||
       !json_data.contains("nodes") || !json_data.contains("server_ip") ||
       !json_data.contains("server_port")) [[unlikely]] {
-    spdlog::error("configurate: Missing required fields");
+    SPDLOG_ERROR("configurate: Missing required fields");
     return false;
   }
   return true;
@@ -36,7 +36,7 @@ bool JSONParser::validateJSONOnRequiredFiledsForServer(
     const json& json_data) const noexcept {
   if (!json_data.contains("ip") || !json_data.contains("port") ||
       !json_data.contains("position")) [[unlikely]] {
-    spdlog::error("configurate: {}", "Missing required fields");
+    SPDLOG_ERROR("configurate: {}", "Missing required fields");
     return false;
   }
   return true;
@@ -46,7 +46,7 @@ bool JSONParser::isIPValid(std::string_view ip) const noexcept {
   std::size_t lastDotPos{ip.rfind('.')};
   if (lastDotPos == std::string::npos || lastDotPos + 1 >= ip.size())
       [[unlikely]] {
-    spdlog::error("Wrong IP: no valid last byte in '{}'", ip);
+    SPDLOG_ERROR("Wrong IP: no valid last byte in '{}'", ip);
     return false;
   }
   std::string last_byte_str{ip.substr(lastDotPos + 1)};
@@ -54,12 +54,12 @@ bool JSONParser::isIPValid(std::string_view ip) const noexcept {
   try {
     last_byte_val = std::stoi(last_byte_str);
   } catch (...) {
-    spdlog::error("Wrong IP: last byte is not a number");
+    SPDLOG_ERROR("Wrong IP: last byte is not a number");
     return false;
   }
   if (last_byte_val < MIN_LAST_IP_BYTE || last_byte_val > MAX_LAST_IP_BYTE)
       [[unlikely]] {
-    spdlog::error("Wrong IP: last byte is out of range(1,253)");
+    SPDLOG_ERROR("Wrong IP: last byte is out of range(1,253)");
     return false;
   }
   return true;
@@ -67,7 +67,7 @@ bool JSONParser::isIPValid(std::string_view ip) const noexcept {
 
 bool JSONParser::isIMEIValid(const std::vector<char>& imei) const noexcept {
   if (imei.size() != IMEI_SIZE) [[unlikely]] {
-    spdlog::error("Wrong IMEI: no valid size");
+    SPDLOG_ERROR("Wrong IMEI: no valid size");
     return false;
   }
   return true;
@@ -75,7 +75,7 @@ bool JSONParser::isIMEIValid(const std::vector<char>& imei) const noexcept {
 
 bool JSONParser::isIMSIValid(const std::vector<char>& imsi) const noexcept {
   if (imsi.size() > MAX_IMSI_SIZE || imsi.size() < MIN_IMSI_SIZE) [[unlikely]] {
-    spdlog::error("Wrong IMSI: no valid size");
+    SPDLOG_ERROR("Wrong IMSI: no valid size");
     return false;
   }
   return true;
@@ -84,7 +84,7 @@ bool JSONParser::isIMSIValid(const std::vector<char>& imsi) const noexcept {
 bool JSONParser::isLocationValid(
     const std::vector<float>& location) const noexcept {
   if (location.size() != COORDINATES_QUANTITY) [[unlikely]] {
-    spdlog::error("Wrong location: no valid size");
+    SPDLOG_ERROR("Wrong location: no valid size");
     return false;
   }
   return true;
@@ -169,7 +169,7 @@ void JSONParser::setValuesServer(const json& json_data, Server& server) const {
 void JSONParser::configurateApp(std::string json_filenameParam,
                                 App& app) const {
   if (json_filenameParam.empty()) [[unlikely]] {
-    spdlog::error("configurate: JSON filename is empty");
+    SPDLOG_ERROR("configurate: JSON filename is empty");
     throw std::invalid_argument("JSON filename is empty");
   }
   std::ifstream json_file(json_filenameParam);
@@ -181,13 +181,13 @@ void JSONParser::configurateApp(std::string json_filenameParam,
   try {
     json_data = json::parse(json_file);
   } catch (const nlohmann::detail::parse_error&) {
-    spdlog::error("configurate: JSON parse error in file {}",
+    SPDLOG_ERROR("configurate: JSON parse error in file {}",
                   json_filenameParam);
     json_file.close();
     throw std::invalid_argument("JSON parse error in file {}" +
                                 json_filenameParam);
   } catch (...) {
-    spdlog::error("configurate: Unknown error with parsing file {}",
+    SPDLOG_ERROR("configurate: Unknown error with parsing file {}",
                   json_filenameParam);
     json_file.close();
     throw std::invalid_argument("Unknown error with parsing file: " +
@@ -203,7 +203,7 @@ void JSONParser::configurateApp(std::string json_filenameParam,
     throw std::invalid_argument("Unknown error with parsing file {}" +
                                 json_filenameParam);
   }
-  spdlog::info("Device configured: IP={}, port={}",
+  SPDLOG_INFO("Device configured: IP={}, port={}",
                app.getDevice().socket.getIp(),
                app.getDevice().socket.getPort());
 }
@@ -211,7 +211,7 @@ void JSONParser::configurateApp(std::string json_filenameParam,
 void JSONParser::configurateServer(std::string json_filenameParam,
                                    Server& server) const {
   if (json_filenameParam.empty()) [[unlikely]] {
-    spdlog::error("configurate: JSON filename is empty");
+    SPDLOG_ERROR("configurate: JSON filename is empty");
     throw std::invalid_argument("JSON filename is empty");
   }
   std::ifstream json_file(json_filenameParam);
@@ -223,13 +223,13 @@ void JSONParser::configurateServer(std::string json_filenameParam,
   try {
     json_data = json::parse(json_file);
   } catch (const nlohmann::detail::parse_error& e) {
-    spdlog::error("configurate: JSON parse error in file {}",
+    SPDLOG_ERROR("configurate: JSON parse error in file {}",
                   json_filenameParam);
     json_file.close();
     throw std::invalid_argument("JSON parse error in file {}" +
                                 json_filenameParam);
   } catch (...) {
-    spdlog::error("configurate: Unknown error with parsing file {}",
+    SPDLOG_ERROR("configurate: Unknown error with parsing file {}",
                   json_filenameParam);
     json_file.close();
     throw std::invalid_argument("Unknown error with parsing file {}" +
@@ -245,6 +245,6 @@ void JSONParser::configurateServer(std::string json_filenameParam,
     throw std::invalid_argument("Unknown error with parsing file {}" +
                                 json_filenameParam);
   }
-  spdlog::info("Server configured: port={}, IP={}", server.getPort(),
+  SPDLOG_INFO("Server configured: port={}, IP={}", server.getPort(),
                server.getIp(), server.getPosition());
 }
