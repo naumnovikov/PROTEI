@@ -38,7 +38,7 @@ std::string Server::inputPosition() {
   if (!std::getline(std::cin, input_buffer)) [[unlikely]] {
     serverWorkingState = WorkingState::NOT_WORKING;
     spdlog::error("Input stream closed or error");
-    throw std::run_error("Input stream closed or error");
+    throw std::runtime_error("Input stream closed or error");
   }
   return input_buffer;
 }
