@@ -172,7 +172,7 @@ float SocketWorker::getDistance(int sock, uint32_t rest_len) const {
   if (format == JSONTypeByte) {
     std::string json_str{rest.begin() + 1, rest.end()};
     try {
-      json worker{json::parse(json_str)};
+      json worker = json::parse(json_str);
       distanceResult = worker.value("distance", distanceError);
     } catch (const std::exception& e) {
       spdlog::warn("JSON parse error: {}", e.what());
