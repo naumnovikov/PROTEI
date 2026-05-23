@@ -38,7 +38,7 @@ std::string Server::inputPosition() {
   if (!std::getline(std::cin, input_buffer)) [[unlikely]] {
     serverWorkingState = WorkingState::NOT_WORKING;
     spdlog::error("Input stream closed or error");
-    throw std::runtime_error("Input stream closed or error");
+    throw std::run_error("Input stream closed or error");
   }
   return input_buffer;
 }
@@ -104,6 +104,7 @@ void Server::processClient(int client_sock, ThreadPool& pool,
                            const char* client_ip, uint16_t client_port) {
   struct timeval tv;
   tv.tv_sec = CLIENT_RESPONCE_TIMEOUT_SEC;
+  tv.tv_usec = 0;
   if (setsockopt(client_sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0)
       [[unlikely]] {
     spdlog::warn("[{}:{}] Failed to set recv timeout", client_ip, client_port);
