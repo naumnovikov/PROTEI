@@ -10,7 +10,6 @@ set(APP_SOURCES
     APP/app/networkaddress.cpp
     APP/menu/active.cpp
     APP/menu/exit.cpp
-    APP/menu/menu.cpp
     APP/menu/move.cpp
     APP/menu/protocol.cpp
     COMMON/jsonparser.cpp
@@ -21,6 +20,7 @@ set(SERVER_SOURCES
     CORE/core/server.cpp
     COMMON/jsonparser.cpp
     COMMON/socketWorker.cpp
+    COMMON/threadpool.cpp
 )
 
 include(FetchContent)
@@ -73,6 +73,11 @@ target_add_include_dirs(server)
 set_target_properties(server PROPERTIES EXCLUDE_FROM_ALL TRUE)
 
 configure_file(DATA/config.json ${CMAKE_CURRENT_BINARY_DIR}/config.json COPYONLY)
+configure_file(DATA/config2.json ${CMAKE_CURRENT_BINARY_DIR}/config2.json COPYONLY)
+configure_file(DATA/config3.json ${CMAKE_CURRENT_BINARY_DIR}/config3.json COPYONLY)
+configure_file(DATA/config4.json ${CMAKE_CURRENT_BINARY_DIR}/config4.json COPYONLY)
+configure_file(DATA/config5.json ${CMAKE_CURRENT_BINARY_DIR}/config5.json COPYONLY)
+configure_file(DATA/config6.json ${CMAKE_CURRENT_BINARY_DIR}/config6.json COPYONLY)
 configure_file(DATA/serverconfig.json ${CMAKE_CURRENT_BINARY_DIR}/serverconfig.json COPYONLY)
 
 if(BUILD_TESTS AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/TESTS)

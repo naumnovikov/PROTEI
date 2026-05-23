@@ -3,12 +3,12 @@ set(PRODUCTION_SOURCES
     ${CMAKE_SOURCE_DIR}/APP/app/networkaddress.cpp
     ${CMAKE_SOURCE_DIR}/APP/menu/active.cpp
     ${CMAKE_SOURCE_DIR}/APP/menu/exit.cpp
-    ${CMAKE_SOURCE_DIR}/APP/menu/menu.cpp
     ${CMAKE_SOURCE_DIR}/APP/menu/protocol.cpp
     ${CMAKE_SOURCE_DIR}/APP/menu/move.cpp
     ${CMAKE_SOURCE_DIR}/CORE/core/server.cpp       
     ${CMAKE_SOURCE_DIR}/COMMON/jsonparser.cpp         
     ${CMAKE_SOURCE_DIR}/COMMON/socketWorker.cpp  
+    ${CMAKE_SOURCE_DIR}/COMMON/threadpool.cpp
 )
 
 set(TEST_SOURCES
