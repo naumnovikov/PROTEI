@@ -1,13 +1,13 @@
 #include "networkaddress.h"
 
-#define THREE_BYTES 24
-#define TWO_BYTES 16
-#define ONE_BYTE 8
-#define FULL_ONE_BYTE_MASK 0xFF
+constexpr uint32_t THREE_BYTES{24};
+constexpr uint32_t TWO_BYTES{16};
+constexpr uint32_t ONE_BYTE{8};
+constexpr uint32_t FULL_ONE_BYTE_MASK{0xFF};
 
-NetworkAddress::NetworkAddress(uint64_t ip_address_LE, uint16_t portParam)
-    : port(portParam) {  // LE = Little Endian
-  uint32_t ip_address32_t{static_cast<uint32_t>(ip_address_LE)};
+NetworkAddress::NetworkAddress(uint64_t ip_address, uint16_t portParam)
+    : port(portParam) { 
+  uint32_t ip_address32_t{static_cast<uint32_t>(ip_address)};
   uint8_t byte0_LE{static_cast<uint8_t>((ip_address32_t >> THREE_BYTES) &
                                         FULL_ONE_BYTE_MASK)};
   uint8_t byte1_LE{

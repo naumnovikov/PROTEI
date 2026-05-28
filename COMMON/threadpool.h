@@ -25,7 +25,7 @@ class ThreadPool {
   std::queue<std::function<void()>> jobs;
 
  public:
-  bool isTerminating() const { return should_terminate.load(); }
+  inline bool isTerminating() const { return should_terminate.load(); }
 
   void start();
   void queueJob(const std::function<void()>& job);

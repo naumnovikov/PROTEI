@@ -30,11 +30,9 @@
 void printStatus(Status status) noexcept {
   if (status == Status::ACTIVE) {
     std::cout << "ACTIVE";
-  } else if (status == Status::NON_ACTIVE) {
-    std::cout << "NON_ACTIVE";
-  } else {
-    SPDLOG_ERROR("Unknown Status value");
+    return;
   }
+  std::cout << "NON_ACTIVE";
 }
 
 void printTypeOfProtocol(TypeOfProtocol typeOfProtocol) noexcept {
@@ -74,6 +72,12 @@ std::vector<std::string> App::interpretateInputCommand(
   return tokens;
 }
 
+void App::turnStringIntoUpper(const std::string& str){
+  for (char& c : str) {
+    c = std::toupper(c);
+  }
+}
+
 void App::ProcessACTIVE(const std::vector<std::string>& tokens) {
   if (tokens.size() < ACTIVE_COMMAND_MIN_TOKENS) [[unlikely]] {
     throw std::invalid_argument("ACTIVE without arguments");
@@ -81,9 +85,7 @@ void App::ProcessACTIVE(const std::vector<std::string>& tokens) {
 
   std::string arg{tokens[1]};
 
-  for (char& c : arg) {
-    c = std::toupper(c);
-  }
+  turnStringIntoUpper(arg);
   if (arg == "TRUE" || arg == "1") {
     Active cmd(*this, Status::ACTIVE);
     cmd.execute();
@@ -135,9 +137,7 @@ void App::ProcessPROTOCOL(const std::vector<std::string>& tokens) {
   }
   std::string arg{tokens[1]};
 
-  for (char& c : arg) {
-    c = std::toupper(c);
-  }
+  turnStringIntoUpper(arg);
   if (arg == "JSON") {
     Protocol cmd(*this, TypeOfProtocol::JSON);
     cmd.execute();
@@ -187,7 +187,7 @@ void App::processInteract(int sock) {
 
     if (input_command == "ACTIVE") {
       try {
-        ProcessACTIVE(tokens);
+        ProcessACTIVE(std::move(tokens));
       } catch (const std::invalid_argument& e) {
         SPDLOG_ERROR("{}", e.what());
         continue;
@@ -197,7 +197,7 @@ void App::processInteract(int sock) {
       }
     } else if (input_command == "MOVE") {
       try {
-        ProcessMOVE(tokens, sock);
+        ProcessMOVE(std::move(tokens), sock);
       } catch (const std::invalid_argument& e) {
         SPDLOG_ERROR("{}", e.what());
         continue;
@@ -210,7 +210,7 @@ void App::processInteract(int sock) {
       }
     } else if (input_command == "PROTOCOL") {
       try {
-        ProcessPROTOCOL(tokens);
+        ProcessPROTOCOL(std::move(tokens));
       } catch (const std::invalid_argument& e) {
         SPDLOG_ERROR("{}", e.what());
         continue;
@@ -220,7 +220,7 @@ void App::processInteract(int sock) {
       }
     } else if (input_command == "EXIT") {
       try {
-        ProcessEXIT(tokens);
+        ProcessEXIT(std::move(tokens));
       } catch (const std::logic_error& e) {
         SPDLOG_ERROR("{}", e.what());
         continue;

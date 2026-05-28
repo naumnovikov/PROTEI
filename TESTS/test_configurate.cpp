@@ -13,7 +13,7 @@ class ConfigurateTest : public ::testing::Test {
   JSONParser parser;
   std::string tempFilename;
 
-  void createTempJson(const std::string& content) {
+  inline void createTempJson(const std::string& content) {
     tempFilename = "/tmp/protei_test_config.json";
     std::ofstream out(tempFilename);
     EXPECT_TRUE(out.is_open()) << "Cannot create temporary file for test";
@@ -21,7 +21,7 @@ class ConfigurateTest : public ::testing::Test {
     out.close();
   }
 
-  void TearDown() override { std::remove(tempFilename.c_str()); }
+  inline void TearDown() override { std::remove(tempFilename.c_str()); }
 };
 
 TEST_F(ConfigurateTest, ValidConfigSetAllFieldsInApp) {

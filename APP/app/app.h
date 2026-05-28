@@ -2,6 +2,7 @@
 #define APP_H
 
 #include <iostream>
+#include <utility>
 
 #include "jsonparser.h"
 #include "networkaddress.h"
@@ -38,52 +39,61 @@ class App {
   void printMenu() const noexcept;
   std::string inputCommand();
   void processInteract(int sock);
-  void ProcessACTIVE(const std::vector<std::string>& tokens);
+
+  //ProcessACTIVE, ProcessMOVE, ProcessEXIT, ProcessPROTOCOL
+  //get vector not by & because in processInteract() I use std::move()
+  //for tokens as it's not used later there
+  void ProcessACTIVE(std::vector<std::string> tokens);
   void ProcessMOVE(std::vector<std::string> tokens, int sock);
-  void ProcessEXIT(const std::vector<std::string>& tokens);
-  void ProcessPROTOCOL(const std::vector<std::string>& tokens);
+  void ProcessEXIT(std::vector<std::string> tokens);
+  void ProcessPROTOCOL(std::vector<std::string> tokens);
+
   std::vector<std::string> interpretateInputCommand(std::string command_buffer);
   void configurate(std::string json_filenameParam);
-
+  void turnStringIntoUpper(const std::string& str);
  public:
   void interact();
 
-  Status getStatus() const noexcept { return status; }
-  void setStatus(Status statusParam) noexcept { status = statusParam; }
-  TypeOfProtocol getProtocol() const noexcept { return typeOfProtocol; }
-  void setProtocol(TypeOfProtocol typeOfProtocolParam) noexcept {
+  inline Status getStatus() const noexcept { return status; }
+  inline void setStatus(Status statusParam) noexcept { status = statusParam; }
+  inline TypeOfProtocol getProtocol() const noexcept { return typeOfProtocol; }
+  inline void setProtocol(TypeOfProtocol typeOfProtocolParam) noexcept {
     typeOfProtocol = typeOfProtocolParam;
   }
-  void setAppWorkingState(WorkingState appWorkingStateParam) noexcept {
+  inline void setAppWorkingState(WorkingState appWorkingStateParam) noexcept {
     appWorkingState = appWorkingStateParam;
   }
-  std::vector<float>& getDeviceLocation() noexcept { return device.location; }
-  const Device& getDevice() const noexcept { return device; }
-  void setDeviceSocket(NetworkAddress socketParam) noexcept {
-    device.socket = socketParam;
+  inline std::vector<float>& getDeviceLocation() noexcept { return device.location; }
+  inline const Device& getDevice() const noexcept { return device; }
+
+  //setters are using copy because when we execute them
+  //we use std::move()
+  //ex: app.setServerIP(std::move(server_ip));      [jsonparser.cpp]
+  inline void setDeviceSocket(NetworkAddress socketParam) noexcept {
+    device.socket = std::move(socketParam);
   }
-  void setDeviceIMEI(std::vector<char> imeiParam) noexcept {
-    device.imei = imeiParam;
+  inline void setDeviceIMEI(std::vector<char> imeiParam) noexcept {
+    device.imei = std::move(imeiParam);
   }
-  void setDeviceIMSI(std::vector<char> imsiParam) noexcept {
-    device.imsi = imsiParam;
+  inline void setDeviceIMSI(std::vector<char> imsiParam) noexcept {
+    device.imsi = std::move(imsiParam);
   }
-  void setDeviceLocation(std::vector<float> locationParam) noexcept {
-    device.location = locationParam;
+  inline void setDeviceLocation(std::vector<float> locationParam) noexcept {
+    device.location = std::move(locationParam);
   }
-  void setDeviceConfig(std::string configParam) noexcept {
-    device.config = configParam;
+  inline void setDeviceConfig(std::string configParam) noexcept {
+    device.config = std::move(configParam);
   }
-  void setDeviceNodes(std::string nodesParam) noexcept {
-    device.nodes = nodesParam;
+  inline void setDeviceNodes(std::string nodesParam) noexcept {
+    device.nodes = std::move(nodesParam);
   }
-  bool isWorking() const noexcept {
-    return appWorkingState == WorkingState::WORKING ? true : false;
+  inline bool isWorking() const noexcept {
+    return appWorkingState == WorkingState::WORKING;
   }
-  void setServerIP(std::string server_ipParam) noexcept {
-    device.server_ip = server_ipParam;
+  inline void setServerIP(std::string server_ipParam) noexcept {
+    device.server_ip = std::move(server_ipParam);
   }
-  void setServerPORT(uint16_t server_portParam) noexcept {
+  inline void setServerPORT(uint16_t server_portParam) noexcept {
     device.server_port = server_portParam;
   }
 };
