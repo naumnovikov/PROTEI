@@ -10,14 +10,13 @@
 #include "workingstate.h"
 
 struct Device {
-  NetworkAddress socket;
+  NetworkAddress serverAddress;
   std::vector<char> imei;
   std::vector<char> imsi;
   std::vector<float> location;
   std::string config;
   std::string nodes;
-  std::string server_ip;
-  uint16_t server_port;
+  std::string ip;
 };
 
 enum class Status { ACTIVE, NON_ACTIVE };
@@ -63,14 +62,13 @@ class App {
   inline void setAppWorkingState(WorkingState appWorkingStateParam) noexcept {
     appWorkingState = appWorkingStateParam;
   }
-  inline std::vector<float>& getDeviceLocation() noexcept { return device.location; }
+  inline std::vector<float>& getDeviceLocationForFilling() noexcept { return device.location; }
   inline const Device& getDevice() const noexcept { return device; }
 
   //setters are using copy because when we execute them
-  //we use std::move()
-  //ex: app.setServerIP(std::move(server_ip));      [jsonparser.cpp]
-  inline void setDeviceSocket(NetworkAddress socketParam) noexcept {
-    device.socket = std::move(socketParam);
+  //we use std::move() in inputParam so it calls default move-constructor
+  inline void setDeviceServerAddress(NetworkAddress serverAddressParam) noexcept {
+    device.serverAddress = std::move(serverAddressParam);
   }
   inline void setDeviceIMEI(std::vector<char> imeiParam) noexcept {
     device.imei = std::move(imeiParam);
@@ -89,12 +87,6 @@ class App {
   }
   inline bool isWorking() const noexcept {
     return appWorkingState == WorkingState::WORKING;
-  }
-  inline void setServerIP(std::string server_ipParam) noexcept {
-    device.server_ip = std::move(server_ipParam);
-  }
-  inline void setServerPORT(uint16_t server_portParam) noexcept {
-    device.server_port = server_portParam;
   }
 };
 

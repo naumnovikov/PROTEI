@@ -2,18 +2,18 @@
 
 void Move::execute() {
   for (std::size_t i{0}; i < newLocation.size(); ++i) {
-    app.getDeviceLocation().at(i) = newLocation.at(i);
+    app.getDevice().location.at(i) = newLocation.at(i);
   }
   SPDLOG_INFO("Location changed to: {}, {}, {}",
-               std::to_string(app.getDeviceLocation()[0]),
-               std::to_string(app.getDeviceLocation()[1]),
-               std::to_string(app.getDeviceLocation()[2]));
+               std::to_string(app.getDeviceLocationForFilling()[0]),
+               std::to_string(app.getDeviceLocationForFilling()[1]),
+               std::to_string(app.getDeviceLocationForFilling()[2]));
   std::vector<uint8_t> msg;
 
   if (app.getProtocol() == TypeOfProtocol::BINARY) {
-    socketWorker.fillMsgInBinaryFormatInBE(msg, app.getDeviceLocation());
+    socketWorker.fillMsgInBinaryFormatInBE(msg, app.getDeviceLocationForFilling());
   } else {
-    socketWorker.fillMsgInJSONFormatInBE(msg, app.getDeviceLocation());
+    socketWorker.fillMsgInJSONFormatInBE(msg, app.getDeviceLocationForFilling());
   }
 
   if (send(sock, msg.data(), msg.size(), 0) < 0) [[unlikely]] {

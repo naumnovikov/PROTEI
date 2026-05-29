@@ -18,7 +18,7 @@ Server::Server(Server&& other) noexcept
     : port(other.port), position(other.position) {
   other.port = 0;
   other.position = {0, 0, 0};
-  SPDLOG_INFO("Servers' copy-constuctor used");
+  SPDLOG_INFO("Servers' move-constuctor used");
 }
 
 Server& Server::operator=(Server&& other) noexcept {
@@ -83,7 +83,7 @@ void Server::processPositionInput(std::vector<std::string> tokens) {
     throw std::invalid_argument("Input must have 3 arguments");
   }
 
-  std::vector<float> new_position;
+  position_vector new_position;
   try {
     for (std::size_t i{0}; i < tokens_quantity; ++i) {
       new_position.push_back(std::stof(tokens.at(i)));
@@ -93,10 +93,7 @@ void Server::processPositionInput(std::vector<std::string> tokens) {
     throw std::invalid_argument("Invalid number format");
   }
 
-  float distance{static_cast<float>(
-      std::sqrt(std::pow(std::abs(position.at(0) - new_position.at(0)), 2) +
-                std::pow(std::abs(position.at(1) - new_position.at(1)), 2) +
-                std::pow(std::abs(position.at(2) - new_position.at(2)), 2)))};
+  float distance{countDistance(position.at(0) - new_position.at(0), position.at(1) - new_position.at(1), position.at(2) - new_position.at(2))};
   SPDLOG_INFO("Distance is {}", distance);
 }
 

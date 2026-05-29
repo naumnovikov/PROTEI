@@ -2,7 +2,6 @@
 
 void Active::execute() {
   if (app.getStatus() == newStatus) {
-    SPDLOG_WARN("ACTIVE: status already set to the requested value");
     return;
   }
   app.setStatus(newStatus);

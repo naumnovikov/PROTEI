@@ -7,7 +7,7 @@
 
 using IPv4 = std::string;
 
-const std::string LOCAL_IPv4_EXAMPLE{"192.168.0.101"};
+const std::string IPv4_EXAMPLE{"192.168.0.102"};
 constexpr uint16_t PORT_EXAMPLE{2000};
 
 class NetworkAddress {
@@ -16,7 +16,7 @@ class NetworkAddress {
   uint16_t port;
 
  public:
-  NetworkAddress() : ip(LOCAL_IPv4_EXAMPLE), port(PORT_EXAMPLE) {};
+  NetworkAddress() : ip(IPv4_EXAMPLE), port(PORT_EXAMPLE) {};
   NetworkAddress(const std::string& ip_adrressParam, uint16_t portParam)
       : ip(ip_adrressParam), port(portParam) {}
   NetworkAddress(uint64_t ip_address, uint16_t portParam);
@@ -25,6 +25,7 @@ class NetworkAddress {
                  const std::string& portParam);
 
   inline std::string_view getIp() const { return ip; }
+  inline std::string getIpString() const { return ip; }
   inline uint16_t getPort() const { return port; }
 };
 

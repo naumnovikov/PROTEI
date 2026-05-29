@@ -6,10 +6,12 @@
 #include <string>
 #include <vector>
 
-#define THREE_BYTES 24
-#define TWO_BYTES 16
-#define ONE_BYTE 8
-#define FULL_ONE_BYTE_MASK 0xFF
+constexpr uint32_t THREE_BYTES{24};
+constexpr uint32_t TWO_BYTES{16};
+constexpr uint32_t ONE_BYTE{8};
+constexpr uint32_t FULL_ONE_BYTE_MASK{0xFF};
+constexpr uint32_t EMPTY_LEN{0};
+constexpr uint32_t MAX_REST_LEN{65536};
 #define FLOAT_SIZE 4
 
 constexpr float distanceError{-1.0f};
@@ -146,7 +148,7 @@ uint32_t SocketWorker::receiveRest_lenInLE(int sock) const {
   memcpy(&tmp, rest_len_buf.data(), 4);
   uint32_t rest_len{ntohl(tmp)};
 
-  if (rest_len == 0 || rest_len > 65536) [[unlikely]] {
+  if (rest_len == EMPTY_LEN || rest_len > MAX_REST_LEN) [[unlikely]] {
     SPDLOG_ERROR("invalid rest_len {}", rest_len);
     throw std::out_of_range("invalid rest_len");
   }
@@ -207,6 +209,12 @@ int SocketWorker::bindListenerForConnections(const uint16_t port,
          0;
 }
 
+float SocketWorker::countDistance(float x_dif, float, y_dif, float z_dif){
+  return static_cast<float>(std::sqrt(std::pow(std::abs(x_dif), 2) +
+                                      std::pow(std::abs(y_dif), 2) +
+                                      std::pow(std::abs(z_dif), 2)));
+}
+
 bool SocketWorker::sendDistance(int client_sock, uint32_t rest_len,
                                 bool& client_ok,
                                 const std::vector<float>& position,
@@ -265,10 +273,8 @@ bool SocketWorker::sendDistance(int client_sock, uint32_t rest_len,
     return false;
   }
 
-  float distance =
-      static_cast<float>(std::sqrt(std::pow(std::abs(position[0] - x), 2) +
-                                   std::pow(std::abs(position[1] - y), 2) +
-                                   std::pow(std::abs(position[2] - z), 2)));
+  float distance{countDistance(position[0]-x, position[1]-y, position[2]-z)};
+
   SPDLOG_INFO("[{}:{}] Received: ({}, {}, {}) -> distance = {}", client_ip,
                client_port, x, y, z, distance);
 

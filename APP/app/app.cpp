@@ -26,6 +26,7 @@
 #define MOVE_COMMAND_MIN_TOKENS 2
 #define MOVE_COMMAND_MAX_TOKENS 4
 #define PROTOCOL_COMMAND_MIN_TOKENS 2
+#define TCP_VALUE 0
 
 void printStatus(Status status) noexcept {
   if (status == Status::ACTIVE) {
@@ -112,15 +113,21 @@ void App::ProcessMOVE(std::vector<std::string> tokens, int sock) {
   }
   std::vector<float> new_location;
   try {
-    for (std::size_t i{1}; i < tokens_quantity; ++i){
-      new_location.push_back(std::stof(tokens[i]));
-    }
-  } catch (...) {
-    SPDLOG_ERROR("MOVE: invalid number format");
-    throw std::invalid_argument("Invalid number format");
+      for (std::size_t i{1}; i < tokens_quantity; ++i) {
+          new_location.push_back(std::stof(tokens[i]));
+      }
+      Move cmd(*this, new_location, sock);
+      cmd.execute();
+  } catch (const std::invalid_argument& e) {
+      SPDLOG_ERROR("MOVE: invalid number format: {}", e.what());
+  } catch (const std::out_of_range& e) {
+      SPDLOG_ERROR("MOVE: index out of range: {}", e.what());
+  } catch (const std::bad_alloc& e) {
+      SPDLOG_ERROR("MOVE: memory allocation failed: {}", e.what());
   }
-  Move cmd(*this, new_location, sock);
-  cmd.execute();
+  // If any other exception drops,
+  // I catch it in processInteract()
+  // in catch(...) so here's no double logging
 }
 
 void App::ProcessEXIT(const std::vector<std::string>& tokens) {
@@ -198,9 +205,6 @@ void App::processInteract(int sock) {
     } else if (input_command == "MOVE") {
       try {
         ProcessMOVE(std::move(tokens), sock);
-      } catch (const std::invalid_argument& e) {
-        SPDLOG_ERROR("{}", e.what());
-        continue;
       } catch (const std::logic_error& e) {
         SPDLOG_ERROR("{}", e.what());
         continue;
@@ -260,14 +264,14 @@ void App::interact() {
   // COPYPASTED FROM
   // https://rsdn.org/article/unix/sockets.xml
 
-  int sock{socket(AF_INET, SOCK_STREAM, 0)};  // 0 means TCP by default
+  int sock{socket(AF_INET, SOCK_STREAM, TCP_VALUE)}; 
   if (sock < 0) [[unlikely]] {
     SPDLOG_ERROR("Socket initialization error");
     return;
   }
 
-  if (socketWorker.connectAppSocketToServer(sock, device.server_port,
-                                            device.server_ip.c_str()) < 0) {
+  if (socketWorker.connectAppSocketToServer(sock, device.serverAddress.getPort(),
+                                            device.serverAddress.getIpString().c_str()) < 0) {
     SPDLOG_ERROR("Connection error");
     return;
   }

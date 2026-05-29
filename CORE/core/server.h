@@ -7,12 +7,13 @@
 #include "workingstate.h"
 
 using IPv4 = std::string;
+using position_vector = std::vector<float>
 
 class Server {
  private:
   uint16_t port;
   IPv4 ip;
-  std::vector<float> position;
+  position_vector position;
   std::atomic<WorkingState> serverWorkingState{WorkingState::WORKING};
   SocketWorker socketWorker;
 
@@ -33,10 +34,10 @@ class Server {
   void interact();
 
   inline uint16_t getPort() const noexcept { return port; }
-  inline std::vector<float> getPosition() const noexcept { return position; }
+  inline position_vector getPosition() const noexcept { return position; }
   inline IPv4 getIp() const noexcept { return ip; }
   inline void setPort(uint16_t portParam) noexcept { port = portParam; }
-  inline void setPosition(std::vector<float> positionParam) noexcept {
+  inline void setPosition(position_vector positionParam) noexcept {
     position = positionParam;
   }
   inline void setIp(IPv4 ipParam) noexcept { ip = ipParam; };

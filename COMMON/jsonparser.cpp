@@ -21,7 +21,7 @@
 
 bool JSONParser::validateJSONOnRequiredFiledsForApp(
     const json& json_data) const noexcept {
-  if (!json_data.contains("ip") || !json_data.contains("port") ||
+  if (!json_data.contains("ip") ||
       !json_data.contains("imei") || !json_data.contains("imsi") ||
       !json_data.contains("location") || !json_data.contains("config") ||
       !json_data.contains("nodes") || !json_data.contains("server_ip") ||
@@ -100,11 +100,6 @@ void JSONParser::setValuesApp(const json& json_data, App& app) const {
     throw std::invalid_argument("No valid IP");
   }
 
-  uint16_t port{json_data["port"].get<uint16_t>()};
-  if (port < IANA_REGISTRED_PORTS_MIN || port > IANA_REGISTRED_PORTS_MAX) {
-    throw std::invalid_argument("Wrong PORT according to IANA");
-  }
-
   std::vector<char> imei{json_data["imei"].get<std::vector<char>>()};
   if (!isIMEIValid(imei)) [[unlikely]] {
     throw std::invalid_argument("No valid IMEI in file");
@@ -130,15 +125,13 @@ void JSONParser::setValuesApp(const json& json_data, App& app) const {
   if (!isIPValid(server_ip)) [[unlikely]] {
     throw std::invalid_argument("No valid server_ip");
   }
-  app.setServerIP(std::move(server_ip));
 
   uint16_t server_port{json_data["server_port"].get<uint16_t>()};
   if (port < IANA_REGISTRED_PORTS_MIN || port > IANA_REGISTRED_PORTS_MAX) {
     throw std::invalid_argument("Wrong PORT according to IANA");
   }
-  app.setServerPORT(server_port);
 
-  app.setDeviceSocket(std::move(NetworkAddress(ip, port)));
+  app.setDeviceServerAddress(NetworkAddress(server_ip, server_port));
 }
 
 void JSONParser::setValuesServer(const json& json_data, Server& server) const {

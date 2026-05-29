@@ -2,7 +2,6 @@
 
 void Protocol::execute() {
   if (app.getProtocol() == newProtocol) {
-    SPDLOG_WARN("PROTOCOL: already set to requested protocol");
     return;
   }
   app.setProtocol(newProtocol);

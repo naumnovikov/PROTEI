@@ -27,7 +27,7 @@ class SocketWorker {
   void push4BytesInBE(std::vector<uint8_t>& msg, uint32_t data) const;
   void sendResponceToClient(int sock, uint8_t format, float distance,
                             const char* client_ip, uint16_t client_port) const;
-
+  float countDistance(float x_dif, float, y_dif, float z_dif);
  public:
   float decodeFloatFromBEBytes(const uint8_t* data) const noexcept;
   bool recv_full(int sock, uint8_t* buf, std::size_t len) const noexcept;

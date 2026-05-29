@@ -8,15 +8,15 @@ constexpr uint32_t FULL_ONE_BYTE_MASK{0xFF};
 NetworkAddress::NetworkAddress(uint64_t ip_address, uint16_t portParam)
     : port(portParam) { 
   uint32_t ip_address32_t{static_cast<uint32_t>(ip_address)};
-  uint8_t byte0_LE{static_cast<uint8_t>((ip_address32_t >> THREE_BYTES) &
+  uint8_t byte0{static_cast<uint8_t>((ip_address32_t >> THREE_BYTES) &
                                         FULL_ONE_BYTE_MASK)};
-  uint8_t byte1_LE{
+  uint8_t byte1{
       static_cast<uint8_t>((ip_address32_t >> TWO_BYTES) & FULL_ONE_BYTE_MASK)};
-  uint8_t byte2_LE{
+  uint8_t byte2{
       static_cast<uint8_t>((ip_address32_t >> ONE_BYTE) & FULL_ONE_BYTE_MASK)};
-  uint8_t byte3_LE{static_cast<uint8_t>(ip_address32_t & FULL_ONE_BYTE_MASK)};
-  ip = std::to_string(byte0_LE) + "." + std::to_string(byte1_LE) + "." +
-       std::to_string(byte2_LE) + "." + std::to_string(byte3_LE);
+  uint8_t byte3{static_cast<uint8_t>(ip_address32_t & FULL_ONE_BYTE_MASK)};
+  ip = std::to_string(byte0) + "." + std::to_string(byte1) + "." +
+       std::to_string(byte2) + "." + std::to_string(byte3);
 }
 
 NetworkAddress::NetworkAddress(
@@ -26,6 +26,10 @@ NetworkAddress::NetworkAddress(
   port = static_cast<uint16_t>(std::stoi(full_address.substr(colon_index + 1)));
 }
 
+// IMPORTANT:
+// IF WE USE THIS CONSTRUCTOR, WE NEED TO
+// DO IT INSIDE TRY...CATCH
+// BECAUSE OF std::stoi
 NetworkAddress::NetworkAddress(const std::string& ip_adrressParam,
                                const std::string& portParam) {
   ip = ip_adrressParam;
