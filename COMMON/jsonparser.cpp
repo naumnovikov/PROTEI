@@ -210,8 +210,8 @@ void JSONParser::configurateApp(std::string json_filenameParam,
     throw std::invalid_argument("Unknown error with parsing file {}" +
                                 json_filenameParam);
   }
-  SPDLOG_INFO("Device configured: IP={}, port={}", app.getDeviceSocketIP(),
-              app.getDeviceSocketPort());
+  SPDLOG_INFO("Device configured: IP={}, server_port={}, server_ip={}", app.getDeviceSocketIP(),
+              app.getDeviceSocketPort(), app.getDeviceSocketIP());
 }
 
 void JSONParser::configurateServer(std::string json_filenameParam,

@@ -70,7 +70,7 @@ bool SocketBusinessWorker::getCoordinates(uint32_t rest_len,
     try {
       json worker{json::parse(json_str)};
       if (worker.contains("location") && worker["location"].is_array() &&
-          worker["location"].size() >= 3) {
+          worker["location"].size() == 3) {
         x = worker["location"][0].get<float>();
         y = worker["location"][1].get<float>();
         z = worker["location"][2].get<float>();
