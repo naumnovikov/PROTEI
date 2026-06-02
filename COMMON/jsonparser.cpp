@@ -10,22 +10,21 @@
 #include "app.h"
 #include "server.h"
 
-#define MIN_LAST_IP_BYTE 1
-#define MAX_LAST_IP_BYTE 253
-#define IMEI_SIZE 15
-#define MAX_IMSI_SIZE 15
-#define MIN_IMSI_SIZE 1
-#define COORDINATES_QUANTITY 3
-#define IANA_REGISTRED_PORTS_MAX 49151
-#define IANA_REGISTRED_PORTS_MIN 1024
+constexpr int MIN_LAST_IP_BYTE{1};
+constexpr int MAX_LAST_IP_BYTE{253};
+constexpr int IMEI_SIZE{15};
+constexpr int MAX_IMSI_SIZE{15};
+constexpr int MIN_IMSI_SIZE{1};
+constexpr int COORDINATES_QUANTITY{3};
+constexpr int IANA_REGISTRED_PORTS_MAX{49151};
+constexpr int IANA_REGISTRED_PORTS_MIN{1024};
 
 bool JSONParser::validateJSONOnRequiredFiledsForApp(
     const json& json_data) const noexcept {
-  if (!json_data.contains("ip") ||
-      !json_data.contains("imei") || !json_data.contains("imsi") ||
-      !json_data.contains("location") || !json_data.contains("config") ||
-      !json_data.contains("nodes") || !json_data.contains("server_ip") ||
-      !json_data.contains("server_port")) [[unlikely]] {
+  if (!json_data.contains("ip") || !json_data.contains("imei") ||
+      !json_data.contains("imsi") || !json_data.contains("location") ||
+      !json_data.contains("server_ip") || !json_data.contains("server_port"))
+      [[unlikely]] {
     SPDLOG_ERROR("configurate: Missing required fields");
     return false;
   }
@@ -65,7 +64,7 @@ bool JSONParser::isIPValid(std::string_view ip) const noexcept {
   return true;
 }
 
-bool JSONParser::isIMEIValid(const std::vector<char>& imei) const noexcept {
+bool JSONParser::isIMEIValid(std::string_view imei) const noexcept {
   if (imei.size() != IMEI_SIZE) [[unlikely]] {
     SPDLOG_ERROR("Wrong IMEI: no valid size");
     return false;
@@ -73,7 +72,7 @@ bool JSONParser::isIMEIValid(const std::vector<char>& imei) const noexcept {
   return true;
 }
 
-bool JSONParser::isIMSIValid(const std::vector<char>& imsi) const noexcept {
+bool JSONParser::isIMSIValid(std::string_view imsi) const noexcept {
   if (imsi.size() > MAX_IMSI_SIZE || imsi.size() < MIN_IMSI_SIZE) [[unlikely]] {
     SPDLOG_ERROR("Wrong IMSI: no valid size");
     return false;
@@ -100,13 +99,13 @@ void JSONParser::setValuesApp(const json& json_data, App& app) const {
     throw std::invalid_argument("No valid IP");
   }
 
-  std::vector<char> imei{json_data["imei"].get<std::vector<char>>()};
+  std::string imei{json_data["imei"].get<std::string>()};
   if (!isIMEIValid(imei)) [[unlikely]] {
     throw std::invalid_argument("No valid IMEI in file");
   }
   app.setDeviceIMEI(std::move(imei));
 
-  std::vector<char> imsi{json_data["imsi"].get<std::vector<char>>()};
+  std::string imsi{json_data["imsi"].get<std::string>()};
   if (!isIMSIValid(imsi)) [[unlikely]] {
     throw std::invalid_argument("No valid IMSI in file");
   }
@@ -118,19 +117,34 @@ void JSONParser::setValuesApp(const json& json_data, App& app) const {
   }
   app.setDeviceLocation(std::move(location));
 
-  app.setDeviceConfig(std::move(json_data["config"].get<std::string>()));
-  app.setDeviceNodes(std::move(json_data["nodes"].get<std::string>()));
-
   std::string server_ip{json_data["server_ip"].get<std::string>()};
   if (!isIPValid(server_ip)) [[unlikely]] {
     throw std::invalid_argument("No valid server_ip");
   }
 
   uint16_t server_port{json_data["server_port"].get<uint16_t>()};
-  if (port < IANA_REGISTRED_PORTS_MIN || port > IANA_REGISTRED_PORTS_MAX) {
+  if (server_port < IANA_REGISTRED_PORTS_MIN ||
+      server_port > IANA_REGISTRED_PORTS_MAX) {
     throw std::invalid_argument("Wrong PORT according to IANA");
   }
 
+  if (!json_data.contains("config")) {
+    SPDLOG_INFO(
+        "Missing not required field config {}. Replaced with default value: {}",
+        "config", "config_default");
+    app.setDeviceConfig("config_default");
+  } else {
+    app.setDeviceConfig(std::move(json_data["config"].get<std::string>()));
+  }
+
+  if (!json_data.contains("nodes")) {
+    SPDLOG_INFO(
+        "Missing not required field nodes {}. Replaced with default value: {}",
+        "nodes", "nodes_default");
+    app.setDeviceNodes("nodes_default");
+  } else {
+    app.setDeviceNodes(std::move(json_data["nodes"].get<std::string>()));
+  }
   app.setDeviceServerAddress(NetworkAddress(server_ip, server_port));
 }
 
@@ -175,13 +189,13 @@ void JSONParser::configurateApp(std::string json_filenameParam,
     json_data = json::parse(json_file);
   } catch (const nlohmann::detail::parse_error&) {
     SPDLOG_ERROR("configurate: JSON parse error in file {}",
-                  json_filenameParam);
+                 json_filenameParam);
     json_file.close();
-    throw std::invalid_argument("JSON parse error in file {}" +
+    throw std::invalid_argument("JSON parse error in file: " +
                                 json_filenameParam);
   } catch (...) {
     SPDLOG_ERROR("configurate: Unknown error with parsing file {}",
-                  json_filenameParam);
+                 json_filenameParam);
     json_file.close();
     throw std::invalid_argument("Unknown error with parsing file: " +
                                 json_filenameParam);
@@ -196,9 +210,8 @@ void JSONParser::configurateApp(std::string json_filenameParam,
     throw std::invalid_argument("Unknown error with parsing file {}" +
                                 json_filenameParam);
   }
-  SPDLOG_INFO("Device configured: IP={}, port={}",
-               app.getDevice().socket.getIp(),
-               app.getDevice().socket.getPort());
+  SPDLOG_INFO("Device configured: IP={}, port={}", app.getDeviceSocketIP(),
+              app.getDeviceSocketPort());
 }
 
 void JSONParser::configurateServer(std::string json_filenameParam,
@@ -217,15 +230,15 @@ void JSONParser::configurateServer(std::string json_filenameParam,
     json_data = json::parse(json_file);
   } catch (const nlohmann::detail::parse_error& e) {
     SPDLOG_ERROR("configurate: JSON parse error in file {}",
-                  json_filenameParam);
+                 json_filenameParam);
     json_file.close();
-    throw std::invalid_argument("JSON parse error in file {}" +
+    throw std::invalid_argument("JSON parse error in file" +
                                 json_filenameParam);
   } catch (...) {
     SPDLOG_ERROR("configurate: Unknown error with parsing file {}",
-                  json_filenameParam);
+                 json_filenameParam);
     json_file.close();
-    throw std::invalid_argument("Unknown error with parsing file {}" +
+    throw std::invalid_argument("Unknown error with parsing file" +
                                 json_filenameParam);
   }
   json_file.close();
@@ -234,10 +247,11 @@ void JSONParser::configurateServer(std::string json_filenameParam,
     setValuesServer(json_data, server);
   } catch (const std::invalid_argument& e) {
     throw e;
+  } catch (const std::exception& e) {
+    throw std::runtime_error(e.what());
   } catch (...) {
-    throw std::invalid_argument("Unknown error with parsing file {}" +
-                                json_filenameParam);
+    throw std::runtime_error("Completely unknown error with file");
   }
   SPDLOG_INFO("Server configured: port={}, IP={}", server.getPort(),
-               server.getIp(), server.getPosition());
+              server.getIp(), server.getPosition());
 }

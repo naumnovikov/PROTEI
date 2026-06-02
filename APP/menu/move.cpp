@@ -1,29 +1,30 @@
 #include "move.h"
 
 void Move::execute() {
+  std::vector<float> temp{app.getDeviceLocation()};
   for (std::size_t i{0}; i < newLocation.size(); ++i) {
-    app.getDevice().location.at(i) = newLocation.at(i);
+    temp.at(i) = newLocation.at(i);
   }
-  SPDLOG_INFO("Location changed to: {}, {}, {}",
-               std::to_string(app.getDeviceLocationForFilling()[0]),
-               std::to_string(app.getDeviceLocationForFilling()[1]),
-               std::to_string(app.getDeviceLocationForFilling()[2]));
+  app.setDeviceLocation(temp);
+  SPDLOG_INFO("Location changed to: {}, {}, {}", std::to_string(temp[0]),
+              std::to_string(temp[1]), std::to_string(temp[2]));
   std::vector<uint8_t> msg;
 
   if (app.getProtocol() == TypeOfProtocol::BINARY) {
-    socketWorker.fillMsgInBinaryFormatInBE(msg, app.getDeviceLocationForFilling());
+    socketBusinessWorker.fillMsgInBinaryFormatInBE(msg,
+                                                   app.getDeviceLocation());
   } else {
-    socketWorker.fillMsgInJSONFormatInBE(msg, app.getDeviceLocationForFilling());
+    socketBusinessWorker.fillMsgInJSONFormatInBE(msg, app.getDeviceLocation());
   }
 
-  if (send(sock, msg.data(), msg.size(), 0) < 0) [[unlikely]] {
+  if (send(sock.getSocket(), msg.data(), msg.size(), 0) < 0) [[unlikely]] {
     SPDLOG_ERROR("Send error");
     return;
   }
 
   uint32_t rest_len;
   try {
-    rest_len = socketWorker.receiveRest_lenInLE(sock);
+    rest_len = socketBusinessWorker.receiveRest_lenInLE(sock);
   } catch (const std::runtime_error& e) {
     return;
   } catch (const std::out_of_range& e) {
@@ -33,7 +34,7 @@ void Move::execute() {
     return;
   }
 
-  float distanceResult{socketWorker.getDistance(sock, rest_len)};
+  float distanceResult{socketBusinessWorker.getDistance(sock, rest_len)};
 
   if (distanceResult == -1.0f) [[unlikely]] {
     return;

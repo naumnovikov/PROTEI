@@ -7,7 +7,8 @@ set(PRODUCTION_SOURCES
     ${CMAKE_SOURCE_DIR}/APP/menu/move.cpp
     ${CMAKE_SOURCE_DIR}/CORE/core/server.cpp       
     ${CMAKE_SOURCE_DIR}/COMMON/jsonparser.cpp         
-    ${CMAKE_SOURCE_DIR}/COMMON/socketWorker.cpp  
+    ${CMAKE_SOURCE_DIR}/COMMON/socketBusinessWorker.cpp  
+    ${CMAKE_SOURCE_DIR}/COMMON/sock.cpp  
     ${CMAKE_SOURCE_DIR}/COMMON/threadpool.cpp
 )
 

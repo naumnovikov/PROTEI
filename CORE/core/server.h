@@ -2,12 +2,12 @@
 #define SERVER_H
 
 #include "jsonparser.h"
-#include "socketWorker.h"
+#include "socketBusinessWorker.h"
 #include "threadpool.h"
 #include "workingstate.h"
 
 using IPv4 = std::string;
-using position_vector = std::vector<float>
+using position_vector = std::vector<float>;
 
 class Server {
  private:
@@ -15,14 +15,14 @@ class Server {
   IPv4 ip;
   position_vector position;
   std::atomic<WorkingState> serverWorkingState{WorkingState::WORKING};
-  SocketWorker socketWorker;
+  SocketBusinessWorker socketBusinessWorker;
 
   std::string inputPosition();
   std::vector<std::string> interpretateInput(std::string input_buffer);
   void processPositionInput(std::vector<std::string> tokens);
   bool isExitCommand(std::string firstToken);
-  void processClient(int client_sock, ThreadPool& pool, const char* client_ip,
-                     uint16_t client_port);
+  void processClient(std::shared_ptr<Sock> client_sock, ThreadPool& pool,
+                     const char* client_ip, uint16_t client_port);
   void processClients(int listenerForConnections, ThreadPool& pool);
 
  public:

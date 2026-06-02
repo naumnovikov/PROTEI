@@ -1,14 +1,9 @@
 #include "app.h"
 
-#include <arpa/inet.h>
 #include <ctype.h>
-#include <netinet/in.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
 
 #include <cerrno>
 #include <cmath>
@@ -22,11 +17,10 @@
 #include "move.h"
 #include "protocol.h"
 
-#define ACTIVE_COMMAND_MIN_TOKENS 2
-#define MOVE_COMMAND_MIN_TOKENS 2
-#define MOVE_COMMAND_MAX_TOKENS 4
-#define PROTOCOL_COMMAND_MIN_TOKENS 2
-#define TCP_VALUE 0
+constexpr int ACTIVE_COMMAND_MIN_TOKENS{2};
+constexpr int MOVE_COMMAND_MIN_TOKENS{2};
+constexpr int MOVE_COMMAND_MAX_TOKENS{4};
+constexpr int PROTOCOL_COMMAND_MIN_TOKENS{2};
 
 void printStatus(Status status) noexcept {
   if (status == Status::ACTIVE) {
@@ -50,10 +44,7 @@ void App::printMenu() const noexcept {
   std::cout << "App status: ";
   printStatus(status);
   std::cout << '\n';
-  std::cout << "IMSI: ";
-  for (const char& imsi_ch : device.imsi) {
-    std::cout << static_cast<int>(imsi_ch);
-  }
+  std::cout << "IMSI: " << device.imsi;
   std::cout << "\n1. ACTIVE\n";
   std::cout << "2. MOVE\n";
   std::cout << "3. PROTOCOL\n";
@@ -73,13 +64,13 @@ std::vector<std::string> App::interpretateInputCommand(
   return tokens;
 }
 
-void App::turnStringIntoUpper(const std::string& str){
+void App::turnStringIntoUpper(std::string& str) const {
   for (char& c : str) {
     c = std::toupper(c);
   }
 }
 
-void App::ProcessACTIVE(const std::vector<std::string>& tokens) {
+void App::ProcessACTIVE(std::vector<std::string> tokens) {
   if (tokens.size() < ACTIVE_COMMAND_MIN_TOKENS) [[unlikely]] {
     throw std::invalid_argument("ACTIVE without arguments");
   }
@@ -98,7 +89,7 @@ void App::ProcessACTIVE(const std::vector<std::string>& tokens) {
   }
 }
 
-void App::ProcessMOVE(std::vector<std::string> tokens, int sock) {
+void App::ProcessMOVE(std::vector<std::string> tokens, Sock& sock) {
   if (status == Status::NON_ACTIVE) {
     throw std::logic_error("Cannot move as status is NON_ACTIVE");
   }
@@ -113,24 +104,24 @@ void App::ProcessMOVE(std::vector<std::string> tokens, int sock) {
   }
   std::vector<float> new_location;
   try {
-      for (std::size_t i{1}; i < tokens_quantity; ++i) {
-          new_location.push_back(std::stof(tokens[i]));
-      }
-      Move cmd(*this, new_location, sock);
-      cmd.execute();
+    for (std::size_t i{1}; i < tokens_quantity; ++i) {
+      new_location.push_back(std::stof(tokens[i]));
+    }
+    Move cmd(*this, new_location, sock);
+    cmd.execute();
   } catch (const std::invalid_argument& e) {
-      SPDLOG_ERROR("MOVE: invalid number format: {}", e.what());
+    SPDLOG_ERROR("MOVE: invalid number format: {}", e.what());
   } catch (const std::out_of_range& e) {
-      SPDLOG_ERROR("MOVE: index out of range: {}", e.what());
+    SPDLOG_ERROR("MOVE: index out of range: {}", e.what());
   } catch (const std::bad_alloc& e) {
-      SPDLOG_ERROR("MOVE: memory allocation failed: {}", e.what());
+    SPDLOG_ERROR("MOVE: memory allocation failed: {}", e.what());
   }
   // If any other exception drops,
   // I catch it in processInteract()
   // in catch(...) so here's no double logging
 }
 
-void App::ProcessEXIT(const std::vector<std::string>& tokens) {
+void App::ProcessEXIT(std::vector<std::string> tokens) {
   if (status == Status::ACTIVE) {
     SPDLOG_WARN("EXIT denied: status is ACTIVE");
     throw std::logic_error("Cannot exit as status is ACTIVE");
@@ -138,7 +129,7 @@ void App::ProcessEXIT(const std::vector<std::string>& tokens) {
   Exit cmd(*this);
   cmd.execute();
 }
-void App::ProcessPROTOCOL(const std::vector<std::string>& tokens) {
+void App::ProcessPROTOCOL(std::vector<std::string> tokens) {
   if (tokens.size() < PROTOCOL_COMMAND_MIN_TOKENS) [[unlikely]] {
     throw std::invalid_argument("PROTOCOL without arguments");
   }
@@ -167,7 +158,7 @@ std::string App::inputCommand() {
   return command_buffer;
 }
 
-void App::processInteract(int sock) {
+void App::processInteract(Sock& sock) {
   while (appWorkingState == WorkingState::WORKING) {
     printMenu();
     std::string command_buffer;
@@ -256,6 +247,8 @@ void App::interact() {
   } catch (const std::out_of_range& e) {
     SPDLOG_ERROR("Configuration error: {}", e.what());
     return;
+  } catch (const std::exception& e) {
+    SPDLOG_ERROR("Configuration error: {}", e.what());
   } catch (...) {
     SPDLOG_ERROR("Configuration error");
     return;
@@ -264,19 +257,19 @@ void App::interact() {
   // COPYPASTED FROM
   // https://rsdn.org/article/unix/sockets.xml
 
-  int sock{socket(AF_INET, SOCK_STREAM, TCP_VALUE)}; 
-  if (sock < 0) [[unlikely]] {
+  Sock socket_obj{AF_INET, SOCK_STREAM, TCP_VALUE};
+  int sock_value{socket_obj.getSocket()};
+  if (sock_value < 0) [[unlikely]] {
     SPDLOG_ERROR("Socket initialization error");
     return;
   }
 
-  if (socketWorker.connectAppSocketToServer(sock, device.serverAddress.getPort(),
-                                            device.serverAddress.getIpString().c_str()) < 0) {
+  if (socket_obj.connectAppSocketToServer(
+          device.serverAddress.getPort(),
+          device.serverAddress.getIpString().c_str()) < 0) {
     SPDLOG_ERROR("Connection error");
     return;
   }
 
-  processInteract(sock);
-
-  close(sock);
+  processInteract(socket_obj);
 }

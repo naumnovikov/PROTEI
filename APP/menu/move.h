@@ -2,17 +2,18 @@
 #define MOVE_H
 
 #include "menu.h"
-#include "socketWorker.h"
+#include "socketBusinessWorker.h"
 
 class Move : public Menu {
  private:
   App& app;
   const std::vector<float>& newLocation;
-  int sock;
-  SocketWorker socketWorker;
+  Sock& sock;
+  SocketBusinessWorker socketBusinessWorker;
 
  public:
-  Move(App& appParam, const std::vector<float>& newLocationParam, int sockParam)
+  Move(App& appParam, const std::vector<float>& newLocationParam,
+       Sock& sockParam)
       : app(appParam), newLocation(newLocationParam), sock(sockParam) {}
   void execute() override;
 };

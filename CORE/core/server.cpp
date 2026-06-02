@@ -8,11 +8,11 @@
 #include <limits>
 #include <sstream>
 
-#define CONNECTTION_TIMEOUT_SEC 240
-#define CLIENT_RESPONCE_TIMEOUT_SEC 120
-#define MIN_REST_LEN_BUFFER 0
-#define MAX_REST_LEN_BUFFER 65536
-#define CONNECTIONS_QUEUE_SIZE_LIMIT 5
+constexpr int CONNECTTION_TIMEOUT_SEC{240};
+constexpr int CLIENT_RESPONCE_TIMEOUT_SEC{120};
+constexpr int MIN_REST_LEN_BUFFER{0};
+constexpr int MAX_REST_LEN_BUFFER{65536};
+constexpr int CONNECTIONS_QUEUE_SIZE_LIMIT{5};
 
 Server::Server(Server&& other) noexcept
     : port(other.port), position(other.position) {
@@ -93,17 +93,19 @@ void Server::processPositionInput(std::vector<std::string> tokens) {
     throw std::invalid_argument("Invalid number format");
   }
 
-  float distance{countDistance(position.at(0) - new_position.at(0), position.at(1) - new_position.at(1), position.at(2) - new_position.at(2))};
+  float distance{socketBusinessWorker.countDistance(
+      position.at(0) - new_position.at(0), position.at(1) - new_position.at(1),
+      position.at(2) - new_position.at(2))};
   SPDLOG_INFO("Distance is {}", distance);
 }
 
-void Server::processClient(int client_sock, ThreadPool& pool,
+void Server::processClient(std::shared_ptr<Sock> client_sock, ThreadPool& pool,
                            const char* client_ip, uint16_t client_port) {
   struct timeval tv;
   tv.tv_sec = CLIENT_RESPONCE_TIMEOUT_SEC;
   tv.tv_usec = 0;
-  if (setsockopt(client_sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0)
-      [[unlikely]] {
+  if (setsockopt(client_sock->getSocket(), SOL_SOCKET, SO_RCVTIMEO, &tv,
+                 sizeof(tv)) < 0) [[unlikely]] {
     SPDLOG_WARN("[{}:{}] Failed to set recv timeout", client_ip, client_port);
   }
 
@@ -113,22 +115,21 @@ void Server::processClient(int client_sock, ThreadPool& pool,
   while (client_ok && serverWorkingState == WorkingState::WORKING &&
          !pool.isTerminating()) {
     uint8_t len_buf[size_len];
-    if (!socketWorker.recv_full(client_sock, len_buf, 4)) {
+    if (!client_sock->recv_full(len_buf, size_len)) {
       client_ok = false;
       break;
     }
-    uint32_t rest_len{socketWorker.decodeUint32FromBEBytes(len_buf)};
+    uint32_t rest_len{socketBusinessWorker.decodeUint32FromBEBytes(len_buf)};
     if (rest_len == MIN_REST_LEN_BUFFER || rest_len > MAX_REST_LEN_BUFFER) {
       SPDLOG_ERROR("[{}:{}] Invalid rest_len {}", client_ip, client_port,
-                    rest_len);
+                   rest_len);
       break;
     }
-    if (!socketWorker.sendDistance(client_sock, rest_len, client_ok, position,
-                                   client_ip, client_port)) {
+    if (!socketBusinessWorker.sendDistance(*client_sock, rest_len, client_ok,
+                                           position, client_ip, client_port)) {
       break;
     }
   }
-  close(client_sock);
   SPDLOG_INFO("[{}:{}] Client disconnected", client_ip, client_port);
 }
 
@@ -163,10 +164,14 @@ void Server::processClients(int listenerForConnections, ThreadPool& pool) {
       SPDLOG_ERROR("Accept error: {}", strerror(errno));
       continue;
     }
-    char* client_ip{inet_ntoa(client_addr.sin_addr)};
+
+    auto client_socket{std::make_shared<Sock>(client_sock)};
+
+    std::string client_ip{inet_ntoa(client_addr.sin_addr)};
     uint16_t client_port{ntohs(client_addr.sin_port)};
-    pool.queueJob([this, client_sock, &pool, client_ip, client_port]() {
-      processClient(client_sock, pool, client_ip, client_port);
+
+    pool.queueJob([this, client_socket, &pool, client_ip, client_port]() {
+      processClient(client_socket, pool, client_ip.c_str(), client_port);
     });
   }
 }
@@ -188,23 +193,22 @@ void Server::interact() {
     return;
   }
 
-  int listenerForConnections{socket(AF_INET, SOCK_STREAM, 0)};
+  Sock socket_obj{AF_INET, SOCK_STREAM, TCP_VALUE};
+  int listenerForConnections{socket_obj.getSocket()};
   if (listenerForConnections < 0) [[unlikely]] {
     SPDLOG_ERROR("listenerForConnections-socket creation error");
     return;
   }
 
-  if (socketWorker.bindListenerForConnections(
-          port, ip.c_str(), listenerForConnections) < 0) [[unlikely]] {
+  if (socket_obj.bindListenerForConnections(port, ip.c_str()) < 0)
+      [[unlikely]] {
     SPDLOG_ERROR("Bind error");
-    close(listenerForConnections);
     return;
   }
 
   if (listen(listenerForConnections, CONNECTIONS_QUEUE_SIZE_LIMIT) < 0)
       [[unlikely]] {
     SPDLOG_ERROR("Listen error");
-    close(listenerForConnections);
     return;
   }
 
@@ -220,6 +224,5 @@ void Server::interact() {
   }
 
   pool.stop();
-  close(listenerForConnections);
   SPDLOG_INFO("Server stopped");
 }

@@ -2,8 +2,9 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
+#include <iostream>
+
 #include "app.h"
-#include "server.h"
 
 void init_logger();
 
@@ -13,15 +14,10 @@ int main() {
   } catch (...) {
     std::cerr << "Log initialization failed" << std::endl;
   }
-#if defined(APP)
+
   App app;
   app.interact();
-#elif defined(SERVER)
-  Server server;
-  server.interact();
-#else
-  std::cerr << "Wrong macro!" << std::endl;
-#endif
+
   return 0;
 }
 
