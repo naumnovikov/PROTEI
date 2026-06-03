@@ -68,7 +68,9 @@ bool SocketBusinessWorker::getCoordinates(uint32_t rest_len,
   } else if (format == JSONTypeByte) {
     std::string json_str(rest.begin() + 1, rest.end());
     try {
-      json worker{json::parse(json_str)};
+      //initialized not in {} because it causes worker to be an JSON-array.
+      //ex: [ {"location":[1.0,2.0,3.0]} ]. We need just {"location":[1.0,2.0,3.0]}.
+      json worker = json::parse(json_str);
       if (worker.contains("location") && worker["location"].is_array() &&
           worker["location"].size() == 3) {
         x = worker["location"][0].get<float>();
