@@ -5,9 +5,9 @@
 
 #include "app.h"
 
-class Menu{
-public:
-    virtual void execute() = 0;
+class Menu {
+ public:
+  virtual void execute() = 0;
 };
 
-#endif // MENU_H
+#endif  // MENU_H

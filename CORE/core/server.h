@@ -2,38 +2,45 @@
 #define SERVER_H
 
 #include "jsonparser.h"
+#include "socketBusinessWorker.h"
+#include "threadpool.h"
 #include "workingstate.h"
-#include "socketWorker.h"
 
 using IPv4 = std::string;
+using position_vector = std::vector<float>;
 
-class Server{
-private:
-    uint16_t port;
-    IPv4 ip;
-    std::vector<float> position;
-    WorkingState serverWorkingState{WorkingState::WORKING};
-    SocketWorker socketWorker;
+class Server {
+ private:
+  uint16_t port;
+  IPv4 ip;
+  position_vector position;
+  std::atomic<WorkingState> serverWorkingState{WorkingState::WORKING};
+  SocketBusinessWorker socketBusinessWorker;
 
-    std::string inputPosition();
-    std::vector<std::string> interpretateInput(std::string input_buffer);
-    void processPositionInput(std::vector<std::string> tokens);
-    bool isExitCommand(std::string firstToken);
-    void processClients(int listenerForConnections);
-public:
-    Server(){}
+  std::string inputPosition();
+  std::vector<std::string> interpretateInput(std::string input_buffer);
+  void processPositionInput(std::vector<std::string> tokens);
+  bool isExitCommand(std::string firstToken);
+  void processClient(std::shared_ptr<Sock> client_sock, ThreadPool& pool,
+                     const char* client_ip, uint16_t client_port);
+  void processClients(int listenerForConnections, ThreadPool& pool);
 
-    Server(Server&& other) noexcept;
-    Server& operator=(Server&& other) noexcept;
+ public:
+  Server() {}
 
-    void interact();
+  Server(Server&& other) noexcept;
+  Server& operator=(Server&& other) noexcept;
 
-    uint16_t getPort() const noexcept {return port;}
-    std::vector<float> getPosition() const noexcept {return position;}
-    IPv4 getIp() const noexcept {return ip;}
-    void setPort(uint16_t portParam) noexcept {port = portParam;}
-    void setPosition(std::vector<float> positionParam) noexcept {position = positionParam;}
-    void setIp(IPv4 ipParam) noexcept {ip = ipParam;};
+  void interact();
+
+  inline uint16_t getPort() const noexcept { return port; }
+  inline position_vector getPosition() const noexcept { return position; }
+  inline IPv4 getIp() const noexcept { return ip; }
+  inline void setPort(uint16_t portParam) noexcept { port = portParam; }
+  inline void setPosition(position_vector positionParam) noexcept {
+    position = positionParam;
+  }
+  inline void setIp(IPv4 ipParam) noexcept { ip = ipParam; };
 };
 
-#endif // SERVER_H
+#endif  // SERVER_H

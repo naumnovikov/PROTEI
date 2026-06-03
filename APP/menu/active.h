@@ -3,14 +3,15 @@
 
 #include "menu.h"
 
-class Active: public Menu
-{
-private:
-    App& app;
-    Status newStatus;
-public:
-    Active(App& appParam, Status newStatusParam) : app(appParam), newStatus(newStatusParam){}
-    void execute() override;
+class Active : public Menu {
+ private:
+  App& app;
+  Status newStatus;
+
+ public:
+  Active(App& appParam, Status newStatusParam)
+      : app(appParam), newStatus(newStatusParam) {}
+  void execute() override;
 };
 
-#endif // ACTIVE_H
+#endif  // ACTIVE_H

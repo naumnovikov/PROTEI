@@ -3,13 +3,13 @@
 
 #include "menu.h"
 
-class Exit: public Menu
-{
-private:
-    App& app;
-public:
-    explicit Exit(App& appParam) : app(appParam){}
-    void execute() override;
+class Exit : public Menu {
+ private:
+  App& app;
+
+ public:
+  explicit Exit(App& appParam) : app(appParam) {}
+  void execute() override;
 };
 
-#endif // EXIT_H
+#endif  // EXIT_H
