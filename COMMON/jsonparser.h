@@ -5,28 +5,52 @@
 #include <string_view>
 #include <vector>
 
-class App;
-class Server;
+#include "common_types.h"
 
-#include <nlohmann/json.hpp>
+// To fix the problem with shared code,
+// which causes including everything in CMakeLists for each of targets,
+// I decided to do Facade-pattern
 
-using json = nlohmann::json;
+class CommonJsonValidator {
+ public:
+  bool isIPValid(std::string_view ip) const;
+  bool isLocationValid(const position_vector& location) const noexcept;
+};
 
-class JSONParser {
+#ifdef BUILD_UE
+class UE;
+
+class UEJsonParser {
  private:
-  bool validateJSONOnRequiredFiledsForApp(const json& json_file) const noexcept;
-  bool validateJSONOnRequiredFiledsForServer(
-      const json& json_file) const noexcept;
-  bool isIPValid(std::string_view ip) const noexcept;
+  bool validateJSONOnRequiredFiledsForUE(const json& json_file) const;
   bool isIMEIValid(std::string_view imei) const noexcept;
   bool isIMSIValid(std::string_view imsi) const noexcept;
-  bool isLocationValid(const std::vector<float>& location) const noexcept;
-  void setValuesApp(const json& json_data, App& app) const;
-  void setValuesServer(const json& json_data, Server& server) const;
 
  public:
-  void configurateApp(std::string json_filenameParam, App& app) const;
-  void configurateServer(std::string json_filenameParam, Server& app) const;
+  void setValuesUE(const json& json_data, UE& ue) const;
+};
+#endif
+
+#ifdef BUILD_SIMTEL
+class SIMTEL;
+
+class SimtelJsonParser {
+ private:
+  bool validateJSONOnRequiredFiledsForServer(const json& json_file) const;
+
+ public:
+  void setValuesSIMTEL(const json& json_data, SIMTEL& simtel) const;
+};
+#endif
+
+class JSONParser {
+ public:
+#ifdef BUILD_UE
+  void configurateUE(std::string json_filenameParam, UE& ue) const;
+#endif
+#ifdef BUILD_SIMTEL
+  void configurateSIMTEL(std::string json_filenameParam, SIMTEL& simtel) const;
+#endif
 };
 
 #endif  // JSONPARSER_H

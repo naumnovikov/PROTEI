@@ -9,20 +9,21 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <cstdint>
+#include "common_types.h"
 
 class Sock {
  private:
-  int sock;
+  FD sock{-1};
 
  public:
+  Sock() = default;
   Sock(int domain, int type, int protocol);
-  inline explicit Sock(int existing_sock) { sock = existing_sock; };
+  inline explicit Sock(FD fd) { sock = fd; };
   ~Sock();
 
-  // restricting coping and allowing moving
+  // Restricting coping and allowing moving
   // to prevent a situation when
-  // hold >1 version of the same socket
+  // hold > 1 version of the same socket
   Sock(const Sock&) = delete;
   Sock& operator=(const Sock&) = delete;
 
@@ -38,12 +39,24 @@ class Sock {
     return *this;
   }
 
-  inline int getSocket() const noexcept { return sock; }
+  inline FD initialize(int domain, int type, int protocol) {
+    sock = socket(domain, type, protocol);
+    return sock;
+  }
+  inline FD initialize(FD fd) {
+    sock = fd;
+    return sock;
+  }
+
+  inline FD getFd() const noexcept { return sock; }
+  inline void setFd(FD fd) { sock = fd; }
 
   bool recv_full(uint8_t* buf, size_t len) const noexcept;
-  int bindListenerForConnections(const uint16_t port, const char* IP) const;
-  int connectAppSocketToServer(uint16_t server_port,
-                               const char* server_IP) const noexcept;
+  SUCCESS_RESULT bindListenerForConnections(const PORT port,
+                                            const char* IP) const;
+  SUCCESS_RESULT connectUESocketToBS(PORT server_port,
+                                     const char* server_IP) const noexcept;
+  void close_socket() noexcept;
 };
 
 #endif  // SOCK_H

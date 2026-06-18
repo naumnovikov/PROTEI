@@ -1,10 +1,8 @@
 {
-  "ip": "192.168.0.105",
+  "ip": "127.0.0.1",
   "imei": "111111111111112",
   "imsi": "111111111111121",
-  "location": [5, 4, 2],
-  "config" : "null",
-  "nodes" : "null",
-  "server_ip" : "192.168.0.105",
-  "server_port" : 2000
+  "location": [51, 5, 0],
+  "server_ip" : "127.0.0.1",
+  "server_port" : 3001
 }

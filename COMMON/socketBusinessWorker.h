@@ -2,45 +2,55 @@
 #define SOCKETBUSINESSWORKER_H
 
 #include <exception>
-#include <nlohmann/json.hpp>
-#include <vector>
 
 #include "sock.h"
 
-constexpr uint32_t size_len{4};
-constexpr uint32_t protocol_len{1};
-constexpr uint32_t float_len{sizeof(float)};
-constexpr uint32_t binary_type_data_len{3 * float_len};
-
-constexpr uint8_t JSONTypeByte{0x00};
-constexpr uint8_t binaryTypeByte{0x01};
-
-constexpr int TCP_VALUE{0};
+// TO DO:
+//  - decrease quantity of arguments by using struct, std::tuple
 
 class SocketBusinessWorker {
  private:
-  void encodeFloatToBEBytes(float f, uint8_t* out) const noexcept;
-  void push4BytesInBE(std::vector<uint8_t>& msg, uint32_t data) const;
-  void sendResponseToClient(int sock, uint8_t format, float distance,
-                            const char* client_ip, uint16_t client_port) const;
-  bool getCoordinates(uint32_t rest_len, const Sock& client_sock,
-                      bool& client_ok, float& x, float& y, float& z,
-                      const char* client_ip, uint16_t client_port,
-                      uint8_t& format) const;
+  void push4BytesInBE(BYTE_VECTOR& msg, uint32_t data) const;
+  uint32_t decodeUint32FromBEBytes(const BYTE* data) const noexcept;
 
  public:
-  float countDistance(float x_dif, float y_dif, float z_dif) const;
-  float decodeFloatFromBEBytes(const uint8_t* data) const noexcept;
-  bool sendDistance(const Sock& client_sock, uint32_t rest_len, bool& client_ok,
-                    const std::vector<float>& position, const char* client_ip,
-                    uint16_t client_port) const;
-  void fillMsgInBinaryFormatInBE(std::vector<uint8_t>& msg,
-                                 const std::vector<float>& location) const;
-  void fillMsgInJSONFormatInBE(std::vector<uint8_t>& msg,
-                               const std::vector<float>& location) const;
-  uint32_t receiveRest_lenInLE(const Sock& sock) const;
-  float getDistance(const Sock& sock, uint32_t rest_len) const;
-  uint32_t decodeUint32FromBEBytes(const uint8_t* data) const noexcept;
+  SUCCESS_RESULT sendDeliveryReply(FD sock, TMSI tmsi, SMS_ID sms_id,
+                                   DeliveryStatus status) const;
+
+  SUCCESS_RESULT sendTMSIFromBSToUE(TMSI TMSI, FD sock, const char* client_ip,
+                                    PORT client_port) const;
+
+  void encodeFloatToBEBytes(float f, BYTE* out) const noexcept;
+
+  float decodeFloatFromBEBytes(const BYTE* data) const noexcept;
+
+  SUCCESS_RESULT decodeMessageMsg(ENODE_B_ID eNode_b_receiver_id,
+                                  TMSI& TMSI_src, MSISDN& MSISDN_dst,
+                                  SMS_ID& smsId, std::string& SMS_Text,
+                                  BYTE_VECTOR& msg_buf, const char* client_ip,
+                                  PORT client_port) const;
+
+  int decodeIntFromBEBytes(const BYTE* data) const noexcept;
+
+  SUCCESS_RESULT decodeRequestMsg(ENODE_B_ID eNode_b_receiver_id, IMSI& ue_imsi,
+                                  position_vector& ue_location,
+                                  BYTE_VECTOR& msg_buf, const char* client_ip,
+                                  PORT client_port) const;
+
+  SUCCESS_RESULT decodeAttachMsg(ENODE_B_ID eNode_b_receiver_id, IMSI& ue_imsi,
+                                 IMEI& ue_imei, ENODE_B_ID& eNode_B_id,
+                                 BYTE_VECTOR& msg_buf, const char* client_ip,
+                                 PORT client_port) const;
+
+  SUCCESS_RESULT sendHandoverCommand(FD sock, const IPv4& bs_ip, PORT bs_port,
+                                     const char* client_ip,
+                                     PORT client_port) const;
+
+  BYTE_VECTOR encodeDeliveryMsg(TMSI tmsiDst, std::string_view msisdnSrc,
+                                SMS_ID smsId, std::string_view SMS_Text) const;
+
+  SUCCESS_RESULT sendCoefReply(float coef, ENODE_B_ID eNodeB_id, FD client_fd,
+                               const char* client_ip, PORT client_port) const;
 };
 
 #endif  // SOCKETBUSINESSWORKER_H

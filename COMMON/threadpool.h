@@ -7,9 +7,8 @@
 #include <mutex>
 #include <queue>
 #include <thread>
-#include <vector>
 
-constexpr size_t num_threads{20};
+#include "common_types.h"
 
 // COPYPASTED FROM
 // https://stackoverflow.com/questions/15752659/thread-pooling-in-c11
