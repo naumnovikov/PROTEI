@@ -50,6 +50,7 @@ cd UE
 ./UE
 ```
 ### Конфигурация, cборка и запуск **tests**
+Пока inactive
 ```bash
 git clone -b task_05 https://github.com/naumnovikov/PROTEI.git
 cd PROTEI

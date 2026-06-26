@@ -12,12 +12,16 @@ int main() {
   try {
     init_logger();
   } catch (...) {
-    std::cerr << "Log initialization failed" << std::endl;
+    SPDLOG_ERROR("Log initialization failed");
   }
 
   SIMTEL SIMTEL;
-
-  SIMTEL.init("SIMTELconfig.json");
+  try{
+    SIMTEL.init("SIMTELconfig.json");
+  }catch(...){
+    SPDLOG_ERROR("Cannot init SIMTEL");
+    return 1;
+  }
   SIMTEL.start();
   SIMTEL.interact();
 
