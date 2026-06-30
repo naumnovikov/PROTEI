@@ -179,7 +179,7 @@ void SimtelJsonParser::setValuesSIMTEL(const json& json_data,
   }
 }
 
-#endif
+#endif //BUILD_SIMTEL
 
 #ifdef BUILD_UE
 void JSONParser::configurateUE(std::string json_filenameParam, UE& ue) const {
