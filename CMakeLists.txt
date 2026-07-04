@@ -4,8 +4,8 @@ project(PROTEI LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-option(BUILD_APP "Build app" OFF)
-option(BUILD_SERVER "Build server" OFF)
+option(BUILD_UE "Build UE" OFF)
+option(BUILD_SIMTEL "Build SIMTEL" OFF)
 option(BUILD_TESTS "Build unit tests" OFF)
 
 # COPYPASTED FROM
@@ -36,12 +36,16 @@ if (BUILD_TESTS)
     FetchContent_MakeAvailable(googletest)
 endif()
 
-if(BUILD_APP AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/APP)
-    add_subdirectory(APP)
+if (BUILD_SIMTEL)
+    find_package(SQLite3 REQUIRED)
 endif()
 
-if(BUILD_SERVER AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/CORE)
-    add_subdirectory(CORE)
+if(BUILD_UE AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/UE)
+    add_subdirectory(UE)
+endif()
+
+if(BUILD_SIMTEL AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/SIMTEL)
+    add_subdirectory(SIMTEL)
 endif()
 
 if(BUILD_TESTS AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/TESTS)
